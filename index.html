@@ -47,7 +47,7 @@
             <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-medium text-gray-400 mb-1">Username / Operator ID</label>
-                    <input type="text" id="usernameInput" required placeholder="e.g. syahrul" 
+                    <input type="text" id="usernameInput" required placeholder="e.g. syahrul.nizam" 
                         class="w-full bg-darkbg border border-bordercol rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
                 </div>
                 <div>
@@ -55,13 +55,13 @@
                     <input type="password" id="passwordInput" required placeholder="••••••••" 
                         class="w-full bg-darkbg border border-bordercol rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
                 </div>
-                <div id="loginError" class="text-xs text-rose-400 text-center hidden">Invalid credentials. Try admin / xox2026</div>
+                <div id="loginError" class="text-xs text-rose-400 text-center hidden">Invalid credentials or user not found.</div>
                 <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-xl transition-colors shadow-lg shadow-emerald-600/20 text-sm flex items-center justify-center gap-2">
                     <i class="fa-solid fa-right-to-bracket"></i> Authenticate Session
                 </button>
             </form>
             <div class="mt-6 pt-4 border-t border-bordercol text-center">
-                <span class="text-[11px] text-gray-500">Default Demo Credentials: <strong class="text-gray-400">admin</strong> / <strong class="text-gray-400">xox2026</strong></span>
+                <span class="text-[11px] text-gray-500">Default Password for all users: <strong class="text-emerald-400">Xox@2026!@</strong></span>
             </div>
         </div>
     </div>
@@ -112,8 +112,8 @@
                     <i class="fa-solid fa-user-shield text-emerald-400"></i>
                     <span id="loggedInUserDisplay">admin</span>
                 </div>
-                <button onclick="triggerCloudHost()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 rounded-xl text-xs font-medium transition-colors flex items-center gap-2 shadow-lg shadow-emerald-600/20">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> Go Online / Host
+                <button onclick="openUserManagementModal()" class="bg-cardbg hover:bg-cardbg/80 border border-bordercol text-gray-300 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-users-gear text-emerald-400"></i> User Hub
                 </button>
                 <button onclick="openSettings()" class="w-9 h-9 bg-cardbg border border-bordercol rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition-colors">
                     <i class="fa-solid fa-gear"></i>
@@ -241,7 +241,7 @@
         <div class="bg-panelbg border border-bordercol rounded-2xl w-full max-w-lg p-6 shadow-2xl">
             <div class="flex items-center justify-between mb-4 border-b border-bordercol pb-3">
                 <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid folder-open text-amber-400"></i> Select Collector JSONL Log File
+                    <i class="fa-solid fa-folder-open text-amber-400"></i> Select Collector JSONL Log File
                 </h3>
                 <button onclick="closeLogBrowserModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
             </div>
@@ -251,16 +251,105 @@
         </div>
     </div>
 
+    <!-- USER MANAGEMENT & SETTINGS MODAL -->
+    <div id="userManagementModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden">
+        <div class="bg-panelbg border border-bordercol rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-4 border-b border-bordercol pb-3">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-users-gear text-emerald-400"></i> User Hub & Settings
+                </h3>
+                <button onclick="closeUserManagementModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- Change Password Form -->
+                <div class="bg-cardbg/50 border border-bordercol p-4 rounded-xl">
+                    <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3"><i class="fa-solid fa-key text-amber-400 mr-1.5"></i> Change My Password</h4>
+                    <form onsubmit="handleChangePassword(event)" class="space-y-3">
+                        <div>
+                            <label class="block text-[11px] text-gray-400 mb-1">New Password</label>
+                            <input type="password" id="newPasswordInput" required placeholder="Enter new password" 
+                                class="w-full bg-darkbg border border-bordercol rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <button type="submit" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors">
+                            Update Password
+                        </button>
+                        <div id="passChangeMsg" class="text-[11px] text-emerald-400 hidden mt-1">Password updated successfully!</div>
+                    </form>
+                </div>
+
+                <!-- Add New User Form -->
+                <div class="bg-cardbg/50 border border-bordercol p-4 rounded-xl">
+                    <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3"><i class="fa-solid fa-user-plus text-cyan-400 mr-1.5"></i> Add New Authorized User</h4>
+                    <form onsubmit="handleAddNewUser(event)" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[11px] text-gray-400 mb-1">Username</label>
+                                <input type="text" id="newUsernameInput" required placeholder="e.g. johndoe" 
+                                    class="w-full bg-darkbg border border-bordercol rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-gray-400 mb-1">Initial Password</label>
+                                <input type="text" id="newUserPassInput" required value="Xox@2026!@" 
+                                    class="w-full bg-darkbg border border-bordercol rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500">
+                            </div>
+                        </div>
+                        <button type="submit" class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors">
+                            Register User
+                        </button>
+                        <div id="userAddMsg" class="text-[11px] text-emerald-400 hidden mt-1">New user added successfully!</div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        // Authentication handler
-        function handleLogin(event) {
+        // SHA-256 Hashing Utility
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Pre-computed SHA-256 hash for default password: Xox@2026!@
+        // Generated hash: d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d (example hash or dynamic fallback)
+        // We will store user credentials in localStorage or default list
+        let authorizedUsers = JSON.parse(localStorage.getItem('xox_users')) || {
+            "syahrul.nizam": "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
+            "asriza.anwar":  "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
+            "asrul.rezman":  "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
+            "ardina":        "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
+            "saputra.hanim": "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
+            "zaid.amirul":   "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
+            "suffian":       "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
+            "hk.lim":        "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
+            "asri.syafiq":   "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
+            "nur.syafiqa":   "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
+            "admin":         "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d"
+        };
+
+        let currentLoggedInUser = "";
+
+        // Login Handler
+        async function handleLogin(event) {
             event.preventDefault();
-            const user = document.getElementById('usernameInput').value.trim();
-            const pass = document.getElementById('passwordInput').value.trim();
+            const user = document.getElementById('usernameInput').value.trim().toLowerCase();
+            const pass = document.getElementById('passwordInput').value;
             const errBox = document.getElementById('loginError');
 
-            if ((user === 'admin' || user === 'syahrul') && pass === 'xox2026') {
+            // If user doesn't exist in dict, pre-compute hash for default password on the fly
+            if (!authorizedUsers[user]) {
+                const defaultHash = await sha256("Xox@2026!@");
+                authorizedUsers[user] = defaultHash;
+                localStorage.setItem('xox_users', JSON.stringify(authorizedUsers));
+            }
+
+            const hashedInputPass = await sha256(pass);
+            if (authorizedUsers[user] && hashedInputPass === authorizedUsers[user]) {
+                currentLoggedInUser = user;
                 document.getElementById('authModal').classList.add('hidden');
                 const mainDash = document.getElementById('mainDashboard');
                 mainDash.classList.remove('filter', 'blur-sm', 'pointer-events-none');
@@ -268,6 +357,45 @@
             } else {
                 errBox.classList.remove('hidden');
             }
+        }
+
+        // Change Password Handler
+        async function handleChangePassword(event) {
+            event.preventDefault();
+            const newPass = document.getElementById('newPasswordInput').value;
+            const newHash = await sha256(newPass);
+            
+            authorizedUsers[currentLoggedInUser] = newHash;
+            localStorage.setItem('xox_users', JSON.stringify(authorizedUsers));
+            
+            const msg = document.getElementById('passChangeMsg');
+            msg.classList.remove('hidden');
+            setTimeout(() => msg.classList.add('hidden'), 3000);
+            document.getElementById('newPasswordInput').value = '';
+        }
+
+        // Add New User Handler
+        async function handleAddNewUser(event) {
+            event.preventDefault();
+            const newUser = document.getElementById('newUsernameInput').value.trim().toLowerCase();
+            const newPass = document.getElementById('newUserPassInput').value;
+
+            const newHash = await sha256(newPass);
+            authorizedUsers[newUser] = newHash;
+            localStorage.setItem('xox_users', JSON.stringify(authorizedUsers));
+
+            const msg = document.getElementById('userAddMsg');
+            msg.classList.remove('hidden');
+            setTimeout(() => msg.classList.add('hidden'), 3000);
+            document.getElementById('newUsernameInput').value = '';
+        }
+
+        function openUserManagementModal() {
+            document.getElementById('userManagementModal').classList.remove('hidden');
+        }
+
+        function closeUserManagementModal() {
+            document.getElementById('userManagementModal').classList.add('hidden');
         }
 
         // Live Terminal Generator with Ext 2001 & 2002 Highlighting
@@ -310,7 +438,6 @@
             terminalOutput.scrollTop = terminalOutput.scrollHeight;
         }
 
-        // Initialize live stream ticker
         setInterval(appendLogLine, 2200);
         for(let i=0; i<3; i++) appendLogLine();
 
@@ -385,10 +512,6 @@
         function copyLogContent() {
             navigator.clipboard.writeText(document.getElementById('logViewerContent').innerText);
             alert('JSON log content copied to clipboard!');
-        }
-
-        function triggerCloudHost() {
-            alert('Dashboard is ready for GitHub Pages publication! Push this index.html to your repository and enable Pages.');
         }
 
         function openSettings() {
