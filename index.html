@@ -47,12 +47,12 @@
             <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-medium text-gray-400 mb-1">Username / Operator ID</label>
-                    <input type="text" id="usernameInput" required placeholder="e.g. syahrul.nizam" 
+                    <input type="text" id="usernameInput" required autocomplete="off" placeholder="Enter your username..." 
                         class="w-full bg-darkbg border border-bordercol rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-400 mb-1">Access Password</label>
-                    <input type="password" id="passwordInput" required placeholder="••••••••" 
+                    <input type="password" id="passwordInput" required autocomplete="new-password" placeholder="••••••••" 
                         class="w-full bg-darkbg border border-bordercol rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
                 </div>
                 <div id="loginError" class="text-xs text-rose-400 text-center hidden">Invalid credentials or user not found.</div>
@@ -336,11 +336,10 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        // Default Master Password
         const defaultPassword = "Xox@2026!@";
         
-        // Master hardcoded list of all 10 accounts mapped directly to plain-text / dynamic check
-        const masterUsers = [
+        // List of all 10 authorized usernames
+        let masterUsers = [
             "syahrul.nizam",
             "asriza.anwar",
             "asrul.rezman",
@@ -353,35 +352,38 @@
             "nur.syafiqa"
         ];
 
-        // Retrieve custom passwords stored in localStorage or initialize fresh
-        let customPasswords = JSON.parse(localStorage.getItem('xox_passwords_v3')) || {};
+        // Load custom users & passwords from localStorage
+        let savedPasswords = JSON.parse(localStorage.getItem('xox_passv4')) || {};
+        let savedExtraUsers = JSON.parse(localStorage.getItem('xox_extrav4')) || [];
+        
+        // Merge extra users
+        savedExtraUsers.forEach(u => {
+            if (!masterUsers.includes(u)) masterUsers.push(u);
+        });
 
         let currentLoggedInUser = "";
 
-        // Login Handler (Simplified and robust)
         function handleLogin(event) {
             event.preventDefault();
-            const user = document.getElementById('usernameInput').value.trim().toLowerCase();
+            const rawUser = document.getElementById('usernameInput').value;
             const pass = document.getElementById('passwordInput').value;
             const errBox = document.getElementById('loginError');
 
-            // Check if user exists in master list or custom storage
-            const isMasterUser = masterUsers.includes(user);
-            const savedCustomPass = customPasswords[user];
+            const user = rawUser.trim().toLowerCase();
 
-            let isValid = false;
+            // Check if user is authorized
+            const isAuthorized = masterUsers.includes(user) || savedPasswords[user] !== undefined;
 
-            if (isMasterUser) {
-                // Master users accept either custom set password or defaultPassword
-                if (pass === defaultPassword || (savedCustomPass && pass === savedCustomPass)) {
-                    isValid = true;
-                }
-            } else if (savedCustomPass && pass === savedCustomPass) {
-                // Dynamically added users
-                isValid = true;
+            if (!isAuthorized) {
+                errBox.classList.remove('hidden');
+                return;
             }
 
-            if (isValid) {
+            // Check password (either default Xox@2026!@ or custom set password)
+            const customPass = savedPasswords[user];
+            const isValidPassword = (pass === defaultPassword) || (customPass && pass === customPass);
+
+            if (isValidPassword) {
                 currentLoggedInUser = user;
                 document.getElementById('authModal').classList.add('hidden');
                 const mainDash = document.getElementById('mainDashboard');
@@ -393,7 +395,6 @@
             }
         }
 
-        // Logout Handler
         function handleLogout() {
             currentLoggedInUser = "";
             document.getElementById('mainDashboard').classList.add('filter', 'blur-sm', 'pointer-events-none');
@@ -402,13 +403,12 @@
             document.getElementById('usernameInput').value = "";
         }
 
-        // Change Password Handler (Self)
         function handleChangePassword(event) {
             event.preventDefault();
             const newPass = document.getElementById('newPasswordInput').value;
             
-            customPasswords[currentLoggedInUser] = newPass;
-            localStorage.setItem('xox_passwords_v3', JSON.stringify(customPasswords));
+            savedPasswords[currentLoggedInUser] = newPass;
+            localStorage.setItem('xox_passv4', JSON.stringify(savedPasswords));
             
             const msg = document.getElementById('passChangeMsg');
             msg.classList.remove('hidden');
@@ -416,7 +416,6 @@
             document.getElementById('newPasswordInput').value = '';
         }
 
-        // Add New User Handler (Super Admin Only: syahrul.nizam)
         function handleAddNewUser(event) {
             event.preventDefault();
             const newUser = document.getElementById('newUsernameInput').value.trim().toLowerCase();
@@ -424,10 +423,12 @@
 
             if (!masterUsers.includes(newUser)) {
                 masterUsers.push(newUser);
+                if (!savedExtraUsers.includes(newUser)) savedExtraUsers.push(newUser);
             }
-            customPasswords[newUser] = newPass;
-            localStorage.setItem('xox_passwords_v3', JSON.stringify(customPasswords));
-            localStorage.setItem('xox_extra_users', JSON.stringify(masterUsers));
+            savedPasswords[newUser] = newPass;
+            
+            localStorage.setItem('xox_passv4', JSON.stringify(savedPasswords));
+            localStorage.setItem('xox_extrav4', JSON.stringify(savedExtraUsers));
 
             const msg = document.getElementById('userAddMsg');
             msg.classList.remove('hidden');
@@ -435,16 +436,15 @@
             document.getElementById('newUsernameInput').value = '';
         }
 
-        // Reset Any User Password (Super Admin Only: syahrul.nizam)
         function handleResetUserPassword(event) {
             event.preventDefault();
             const targetUser = document.getElementById('resetUsernameInput').value.trim().toLowerCase();
             const newPass = document.getElementById('resetPasswordInput').value;
             const msg = document.getElementById('userResetMsg');
 
-            if (masterUsers.includes(targetUser) || customPasswords[targetUser] !== undefined) {
-                customPasswords[targetUser] = newPass;
-                localStorage.setItem('xox_passwords_v3', JSON.stringify(customPasswords));
+            if (masterUsers.includes(targetUser)) {
+                savedPasswords[targetUser] = newPass;
+                localStorage.setItem('xox_passv4', JSON.stringify(savedPasswords));
                 msg.innerText = `Password reset successfully for ${targetUser}!`;
                 msg.classList.remove('hidden', 'text-rose-400');
                 msg.classList.add('text-emerald-400');
@@ -458,7 +458,6 @@
         }
 
         function openUserManagementModal() {
-            // Show Super Admin options ONLY if logged in as syahrul.nizam
             const superAdminContainer = document.getElementById('superAdminContainer');
             if (currentLoggedInUser === 'syahrul.nizam') {
                 superAdminContainer.classList.remove('hidden');
@@ -543,7 +542,6 @@
         setInterval(appendLogLine, 2200);
         for(let i=0; i<3; i++) appendLogLine();
 
-        // Node.js Laptop Status Monitor
         function checkNodeStatus() {
             const badge = document.getElementById('nodeStatusBadge');
             const dot = document.getElementById('nodeStatusDot');
@@ -561,10 +559,9 @@
         }
         setInterval(checkNodeStatus, 4000);
 
-        // PowerShell Test-NetConnection simulator
         function runTestNetConnection() {
             const ip = document.getElementById('targetIpInput').value;
-            const port = document.getElementById('targetPortInput'].value;
+            const port = document.getElementById('targetPortInput').value;
             const psOutput = document.getElementById('psOutputContainer');
             
             psOutput.innerHTML = `<span class="text-gray-500">Testing connection to ${ip} on port ${port}...</span>`;
@@ -583,13 +580,11 @@
             }, 500);
         }
 
-        // System metrics fluctuation simulator
         setInterval(() => {
             document.getElementById('metricCpu').innerText = (8 + Math.random() * 6).toFixed(0) + '%';
             document.getElementById('metricDisk').innerText = (1 + Math.random() * 0.5).toFixed(0) + '%';
         }, 3000);
 
-        // Log browser mock
         const logFiles = [
             "collector-2026-11-05.jsonl",
             "collector-2026-11-04.jsonl",
