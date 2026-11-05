@@ -84,7 +84,7 @@
                             <span id="nodeStatusText">ONLINE</span>
                         </span>
                     </div>
-                    <p class="text-xs text-gray-400">Asia/Kuala_Lumpur (GMT+8) • Node.js Server & Collector Hub</p>
+                    <p class="text-xs text-gray-400">Node.js Server: 103.191.74.17:3000 • Asia/Kuala_Lumpur (GMT+8)</p>
                 </div>
             </div>
 
@@ -132,7 +132,7 @@
                 <div class="bg-cardbg/50 px-5 py-3 border-b border-bordercol flex items-center justify-between">
                     <div class="flex items-center gap-2.5 text-sm font-semibold text-white">
                         <i class="fa-solid fa-square-rss text-emerald-400 animate-pulse"></i>
-                        <span>Live Terminal Stream — node app.js</span>
+                        <span>Live Terminal Stream — node app.js (103.191.74.17:3000)</span>
                     </div>
                     <!-- STREAM FILTERS -->
                     <div class="flex items-center gap-1 bg-darkbg p-1 rounded-xl border border-bordercol text-xs">
@@ -152,7 +152,7 @@
                 <div class="bg-cardbg/30 border-t border-bordercol px-4 py-2.5 flex items-center justify-between text-xs text-gray-400">
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                        <span>Live streaming Malaysia Local Time (GMT+8)...</span>
+                        <span>Connected to 103.191.74.17:3000 (Node.js Stream)</span>
                     </div>
                     <span class="text-emerald-400 font-semibold font-mono">TZ: Asia/Kuala_Lumpur</span>
                 </div>
@@ -176,21 +176,12 @@
                     <!-- LOG CONTENT WINDOW -->
                     <div class="bg-[#05070b] p-4 font-mono text-[11px] text-gray-300 overflow-y-auto custom-scrollbar" style="max-height: 240px;" id="logViewerContent">
                         {
-  "receivedAt": "2026-11-05T10:07:58.998+08:00",
+  "receivedAt": "2026-11-05T16:00:39.401+08:00",
   "event": "whatsapp_sending",
-  "callId": "00000000-01dd-6cca-2903-e6af0000a021",
-  "phone": "+60166237566",
-  "extension": "2001",
-  "template": "greeting1_en"
-}
-{
-  "receivedAt": "2026-11-05T10:07:59.695+08:00",
-  "event": "whatsapp_sent",
-  "callId": "00000000-01dd-6cca-2903-e6af0000a021",
-  "httpStatus": 200,
-  "conversationId": "20261100000873",
-  "status": "sent",
-  "attempt": 1
+  "callId": "00000000-01dd-6cfb-7b86-97880000a514",
+  "phone": "+60139844304",
+  "extension": "2002",
+  "template": "greeting1_bm"
 }
                     </div>
 
@@ -467,20 +458,41 @@
             document.getElementById('userManagementModal').classList.add('hidden');
         }
 
-        // Live Terminal Stream with Real-time Malaysia Time Generation
-        const allCalls = [
-            { ext: '2001', phone: '+60166237566', callId: '00000000-01dd-6cca-2903-e6af0000a021', template: 'greeting1_en' },
-            { ext: '2002', phone: '+60127604686', callId: '00000000-01dd-6ccd-3b35-b5550000a06c', template: 'greeting1_bm' },
-            { ext: '3000', phone: '+60103300404', callId: '00000000-01dd-6ccd-4f12-5c8d00042570', template: 'welcome_xox' },
-            { ext: '1041', phone: '+60147543702', callId: '00000000-01dd-6ccd-0daa-912200042545', template: 'internal_transfer' },
-            { ext: '2001', phone: '+601113095805', callId: '00000000-01dd-6cf7-eac9-cba0000442f3', template: 'greeting1_en' },
-            { ext: '2002', phone: '+60122716459', callId: '00000000-01dd-6cf9-135c-0672000443e4', template: 'greeting1_bm' }
+        // Realistic Node.js Console Calls with full routing paths matching your screenshots
+        const nodeConsoleCalls = [
+            {
+                ext: '2001',
+                phone: '+601113095805',
+                callId: '00000000-01dd-6cf8-b89d-32a20000a4b4',
+                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8034 -> Ext.3063 -> Ext.2001',
+                template: 'greeting1_en'
+            },
+            {
+                ext: '2002',
+                phone: '+60122716459',
+                callId: '00000000-01dd-6cf9-135c-0672000443e4',
+                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3056 -> Ext.8087 -> Ext.8269 -> Ext.2002',
+                template: 'greeting1_bm'
+            },
+            {
+                ext: '6009', // Non-2001/2002 call for "All" tab testing
+                phone: '+60165273575',
+                callId: '00000000-01dd-6cfb-818f-148000044629',
+                route: 'Ext.3000 -> Ext.3001 -> Ext.8050 -> Ext.8006 -> Ext.8011 -> Ext.6009',
+                template: 'postpaid_billing'
+            },
+            {
+                ext: '2002',
+                phone: '+60139844304',
+                callId: '00000000-01dd-6cfb-7b86-97880000a514',
+                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3056 -> Ext.2002',
+                template: 'greeting1_bm'
+            }
         ];
 
         let currentFilter = 'all';
         let terminalEntries = [];
 
-        // Helper to format any date into strict Malaysia Time (GMT+8) string
         function getMalaysiaTimeString(dateObj) {
             const formatter = new Intl.DateTimeFormat('en-CA', {
                 timeZone: 'Asia/Kuala_Lumpur',
@@ -498,15 +510,14 @@
             return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}+08:00`;
         }
 
-        // Initialize historical mock logs descending backwards from current live time
+        // Initialize historical logs descending from current live time
         function initInitialLogs() {
             let currentTime = new Date();
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 4; i++) {
                 const timeStr = getMalaysiaTimeString(currentTime);
-                const call = allCalls[Math.floor(Math.random() * allCalls.length)];
-                terminalEntries.unshift({ time: timeStr, ...call }); // Older items pushed to top/back
-                // Step back 4 seconds for each historical item
-                currentTime = new Date(currentTime.getTime() - 4000);
+                const call = nodeConsoleCalls[i % nodeConsoleCalls.length];
+                terminalEntries.unshift({ time: timeStr, ...call });
+                currentTime = new Date(currentTime.getTime() - 6000);
             }
         }
         initInitialLogs();
@@ -527,10 +538,9 @@
         }
 
         function appendLogLine() {
-            // Generate exact current live Malaysia time for new incoming calls
             const now = new Date();
             const timeStr = getMalaysiaTimeString(now);
-            const call = allCalls[Math.floor(Math.random() * allCalls.length)];
+            const call = nodeConsoleCalls[Math.floor(Math.random() * nodeConsoleCalls.length)];
             
             terminalEntries.push({ time: timeStr, ...call });
             if (terminalEntries.length > 50) terminalEntries.shift();
@@ -540,10 +550,10 @@
         function renderTerminal() {
             const terminalOutput = document.getElementById('terminalOutput');
             const filtered = terminalEntries.filter(entry => {
-                if (currentFilter === 'all') return true;
-                if (currentFilter === '2001') return entry.ext === '2001';
-                if (currentFilter === '2002') return entry.ext === '2002';
-                if (currentFilter === '2001_2002') return entry.ext === '2001' || entry.ext === '2002';
+                if (currentFilter === 'all') return true; // Show ALL calls
+                if (currentFilter === '2001') return entry.ext === '2001'; // Only 2001 at the end of journey
+                if (currentFilter === '2002') return entry.ext === '2002'; // Only 2002 at the end of journey
+                if (currentFilter === '2001_2002') return entry.ext === '2001' || entry.ext === '2002'; // Both 2001 and 2002
                 return true;
             });
 
@@ -554,26 +564,42 @@
 
             terminalOutput.innerHTML = filtered.map(call => {
                 const isTarget = call.ext === '2001' || call.ext === '2002';
-                const borderCol = isTarget ? 'border-emerald-500/50 bg-emerald-950/10' : 'border-bordercol bg-cardbg/20';
-                const textHighlight = isTarget ? 'text-emerald-400 font-bold' : 'text-gray-300';
-
-                return `
-                    <div class="p-3 rounded-xl border ${borderCol} transition-all">
-                        <div class="text-gray-500">[${call.time}] whatsapp_sending {</div>
-                        <div class="pl-4 space-y-0.5">
-                            <div>callId: <span class="text-cyan-400">'${call.callId}'</span>,</div>
-                            <div>phone: <span class="text-amber-400">'${call.phone}'</span>,</div>
-                            <div>extension: <span class="${textHighlight}">'${call.ext}'</span>,</div>
-                            <div>template: <span class="text-purple-400">'${call.template}'</span></div>
+                
+                if (currentFilter === 'all') {
+                    // Show standard CDR + WhatsApp green log format for 'All'
+                    return `
+                        <div class="p-3 rounded-xl border border-bordercol bg-cardbg/20 transition-all space-y-2">
+                            <div class="text-gray-400 text-[11px]">New CDR (Asia/Kuala_Lumpur):<br>Route: ${call.route}</div>
+                            <div class="text-emerald-400 font-bold">[${call.time}] whatsapp_sending {</div>
+                            <div class="pl-4 space-y-0.5 text-emerald-300">
+                                <div>callId: <span class="text-cyan-400">'${call.callId}'</span>,</div>
+                                <div>phone: <span class="text-amber-400">'${call.phone}'</span>,</div>
+                                <div>extension: <span class="font-bold">'${call.ext}'</span>,</div>
+                                <div>template: <span class="text-purple-400">'${call.template}'</span></div>
+                            </div>
+                            <div class="text-emerald-400 font-bold">}</div>
                         </div>
-                        <div class="text-gray-500">}</div>
-                    </div>
-                `;
+                    `;
+                } else {
+                    // Show strict green WhatsApp terminal logs for 2001 / 2002 tabs
+                    return `
+                        <div class="p-3 rounded-xl border border-emerald-500/50 bg-emerald-950/10 transition-all">
+                            <div class="text-emerald-400 font-bold">[${call.time}] whatsapp_sending {</div>
+                            <div class="pl-4 space-y-0.5">
+                                <div>callId: <span class="text-cyan-400">'${call.callId}'</span>,</div>
+                                <div>phone: <span class="text-amber-400">'${call.phone}'</span>,</div>
+                                <div>extension: <span class="text-emerald-400 font-bold">'${call.ext}'</span>,</div>
+                                <div>template: <span class="text-purple-400">'${call.template}'</span></div>
+                            </div>
+                            <div class="text-emerald-400 font-bold">}</div>
+                        </div>
+                    `;
+                }
             }).join('');
             terminalOutput.scrollTop = terminalOutput.scrollHeight;
         }
 
-        setInterval(appendLogLine, 2200);
+        setInterval(appendLogLine, 3000);
         renderTerminal();
 
         function checkNodeStatus() {
@@ -584,11 +610,11 @@
             if (navigator.onLine) {
                 badge.className = "px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5";
                 dot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse";
-                text.innerText = "ONLINE";
+                text.innerText = "ONLINE (103.191.74.17:3000)";
             } else {
                 badge.className = "px-2.5 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5";
                 dot.className = "w-1.5 h-1.5 rounded-full bg-rose-400";
-                text.innerText = "OFFLINE / NO NETWORK";
+                text.innerText = "OFFLINE";
             }
         }
         setInterval(checkNodeStatus, 4000);
@@ -623,9 +649,7 @@
             "collector-2026-11-05.jsonl",
             "collector-2026-11-04.jsonl",
             "collector-2026-11-03.jsonl",
-            "collector-2026-11-02.jsonl",
-            "collector-2026-11-01.jsonl",
-            "collector-2026-10-31.jsonl"
+            "collector-2026-11-02.jsonl"
         ];
 
         function openLogBrowserModal() {
@@ -648,8 +672,8 @@
         function selectLogFile(filename) {
             document.getElementById('currentLogFileName').innerText = filename;
             document.getElementById('logViewerContent').innerHTML = `
-                { "receivedAt": "2026-11-05T08:00:00+08:00", "event": "file_loaded", "file": "${filename}", "status": "active" }
-                { "receivedAt": "2026-11-05T08:00:01+08:00", "event": "whatsapp_sending", "phone": "+60127604686", "extension": "2002", "status": "queued" }
+                { "receivedAt": "2026-11-05T16:00:00+08:00", "event": "file_loaded", "file": "${filename}", "status": "active" }
+                { "receivedAt": "2026-11-05T16:00:39+08:00", "event": "whatsapp_sending", "phone": "+60139844304", "extension": "2002", "status": "sent" }
             `;
             closeLogBrowserModal();
         }
