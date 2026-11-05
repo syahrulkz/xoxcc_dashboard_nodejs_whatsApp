@@ -144,7 +144,7 @@
                 </div>
 
                 <!-- TERMINAL OUTPUT WINDOW -->
-                <div id="terminalOutput" class="flex-1 bg-[#05070b] p-4 font-mono text-xs overflow-y-auto custom-scrollbar space-y-3" style="max-height: 650px; min-height: 500px;">
+                <div id="terminalOutput" class="flex-1 bg-[#05070b] p-4 font-mono text-[11px] overflow-y-auto custom-scrollbar space-y-3 leading-relaxed" style="max-height: 650px; min-height: 500px;">
                     <!-- Dynamically populated streaming entries -->
                 </div>
 
@@ -176,10 +176,10 @@
                     <!-- LOG CONTENT WINDOW -->
                     <div class="bg-[#05070b] p-4 font-mono text-[11px] text-gray-300 overflow-y-auto custom-scrollbar" style="max-height: 240px;" id="logViewerContent">
                         {
-  "receivedAt": "2026-11-05T16:18:41+08:00",
+  "receivedAt": "2026-11-05T17:15:14+08:00",
   "event": "whatsapp_sending",
-  "callId": "00000000-01dd-6cfe-443b-b8560004483c",
-  "phone": "+601157574095",
+  "callId": "00000000-01dd-6cfb-7b86-97880000a514",
+  "phone": "+60139844304",
   "extension": "2002",
   "template": "greeting1_bm"
 }
@@ -458,39 +458,56 @@
             document.getElementById('userManagementModal').classList.add('hidden');
         }
 
-        // Exact match database matching your console screenshots
+        // Expanded mock DB to heavily include non-target routing (3000, 1020, 8025, 1034) to match screenshot 23
         const nodeConsoleCalls = [
+            {
+                ext: '2001',
+                phone: '+601113095805',
+                callId: '00000000-01dd-6cf8-b89d-32a20000a4b4',
+                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3031 -> Ext.3022 -> Ext.2001',
+                template: 'greeting1_en'
+            },
             {
                 ext: '2002',
                 phone: '+601157574095',
                 callId: '00000000-01dd-6cfe-443b-b8560004483c',
                 route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3056 -> Ext.2002',
-                template: 'greeting1_bm',
-                isTarget: true
+                template: 'greeting1_bm'
             },
             {
-                ext: '1046',
-                phone: '+601170839544',
-                callId: '00000000-01dd-6cfd-4921-d39100044769',
-                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8033 -> Ext.8091 -> Ext.8284 -> Ext.1046',
-                template: 'internal_transfer',
-                isTarget: false
+                ext: '1020',
+                phone: '+601159779890',
+                callId: '00000000-01dd-6d04-1886-befa00004c6b',
+                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8033 -> Ext.3058 -> Ext.8087 -> Ext.8269 -> Ext.1020',
+                template: null
             },
             {
-                ext: '1033',
-                phone: '+60107770052',
-                callId: '00000000-01dd-6cfd-4920-bc4f0000a547',
-                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8033 -> Ext.3058 -> Ext.8087 -> Ext.8269 -> Ext.1033',
-                template: 'support_desk',
-                isTarget: false
+                ext: '8025',
+                phone: '+60122953186',
+                callId: '00000000-01dd-6d04-0359-a3540000a61d',
+                route: 'Ext.3000 -> Ext.3001 -> Ext.8050 -> Ext.8006 -> Ext.8010 -> Ext.3055 -> Ext.8068 -> Ext.8215 -> Ext.8025',
+                template: null
+            },
+            {
+                ext: '1021',
+                phone: '+60122650155',
+                callId: '00000000-01dd-6d04-f8a5-cf4400044d63',
+                route: 'Ext.1021 -> 0122650155',
+                template: null
             },
             {
                 ext: '3000',
                 phone: '+601120572855',
-                callId: '00000000-01dd-6cfe-9459-327000044689',
+                callId: '00000000-01dd-6cfe-9459-327e00044889',
                 route: 'Ext.3000',
-                template: 'welcome_xox',
-                isTarget: false
+                template: null
+            },
+            {
+                ext: '1034',
+                phone: '+60132548099',
+                callId: '00000000-01dd-6d03-99cc-5c7000044bf2',
+                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8034 -> Ext.3061 -> Ext.8093 -> Ext.8293 -> Ext.1034',
+                template: null
             }
         ];
 
@@ -514,12 +531,11 @@
             return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}+08:00`;
         }
 
-        // Initialize historical logs descending from current live time
         function initInitialLogs() {
             let currentTime = new Date();
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 5; i++) {
                 const timeStr = getMalaysiaTimeString(currentTime);
-                const call = nodeConsoleCalls[i % nodeConsoleCalls.length];
+                const call = nodeConsoleCalls[Math.floor(Math.random() * nodeConsoleCalls.length)];
                 terminalEntries.unshift({ time: timeStr, ...call });
                 currentTime = new Date(currentTime.getTime() - 6000);
             }
@@ -553,43 +569,64 @@
 
         function renderTerminal() {
             const terminalOutput = document.getElementById('terminalOutput');
+            
+            // Only output entries that match the selected filter requirements
             const filtered = terminalEntries.filter(entry => {
-                if (currentFilter === 'all') return true; // Show ALL incoming calls
-                if (currentFilter === '2001') return entry.ext === '2001'; // Only if final ext is 2001
-                if (currentFilter === '2002') return entry.ext === '2002'; // Only if final ext is 2002
-                if (currentFilter === '2001_2002') return entry.ext === '2001' || entry.ext === '2002'; // Both 2001 and 2002
+                if (currentFilter === 'all') return true;
+                if (currentFilter === '2001') return entry.ext === '2001';
+                if (currentFilter === '2002') return entry.ext === '2002';
+                if (currentFilter === '2001_2002') return entry.ext === '2001' || entry.ext === '2002';
                 return true;
             });
 
             if (filtered.length === 0) {
-                terminalOutput.innerHTML = `<div class="text-gray-500 italic"># No logs matching filter...</div>`;
+                terminalOutput.innerHTML = `<div class="text-gray-500 italic"># No WhatsApp trigger logs matching filter...</div>`;
                 return;
             }
 
             terminalOutput.innerHTML = filtered.map(call => {
+                
+                // For the "All" tab: render exact console view (White text for routing, green if it triggered whatsapp)
                 if (currentFilter === 'all') {
-                    // Show standard CDR + WhatsApp green log format for 'All'
-                    return `
-                        <div class="p-3 rounded-xl border border-bordercol bg-cardbg/20 transition-all space-y-2">
-                            <div class="text-gray-400 text-[11px]">New CDR (Asia/Kuala_Lumpur):<br>Route: ${call.route}</div>
-                            ${call.isTarget ? `
-                                <div class="text-emerald-400 font-bold">[${call.time}] whatsapp_sending {</div>
-                                <div class="pl-4 space-y-0.5 text-emerald-300">
-                                    <div>callId: <span class="text-cyan-400">'${call.callId}'</span>,</div>
-                                    <div>phone: <span class="text-amber-400">'${call.phone}'</span>,</div>
-                                    <div>extension: <span class="font-bold">'${call.ext}'</span>,</div>
-                                    <div>template: <span class="text-purple-400">'${call.template}'</span></div>
-                                </div>
-                                <div class="text-emerald-400 font-bold">}</div>
-                            ` : `<div class="text-xs text-gray-500 italic"># Routed to Ext.${call.ext} (No WhatsApp trigger)</div>`}
+                    const cdrWhiteText = `
+                        <div class="text-gray-300 font-mono space-y-1 mb-2">
+                            <div>New CDR (Asia/Kuala_Lumpur):</div>
+                            <div>Call ${call.callId},${call.phone},...</div>
+                            <div>Direction: inbound | External number: ${call.phone}</div>
+                            <div>Route: ${call.route}</div>
+                            <div>Saved to: C:\\Users\\cctraining\\Desktop\\xox-cdr-test\\data\\cdr-2026-11-05.jsonl</div>
                         </div>
                     `;
-                } else {
-                    // Strict filter for 2001/2002 tabs (Only show green WhatsApp logs)
-                    return `
-                        <div class="p-3 rounded-xl border border-emerald-500/50 bg-emerald-950/10 transition-all">
+
+                    // If it hit 2001 or 2002, append the whatsapp sending green block below the CDR
+                    const isWhatsAppTarget = call.ext === '2001' || call.ext === '2002';
+                    const greenWhatsAppBlock = isWhatsAppTarget ? `
+                        <div class="mt-4 border-l-2 border-emerald-500 pl-4 py-1">
                             <div class="text-emerald-400 font-bold">[${call.time}] whatsapp_sending {</div>
-                            <div class="pl-4 space-y-0.5">
+                            <div class="pl-4 space-y-0.5 text-emerald-300">
+                                <div>callId: <span class="text-cyan-400">'${call.callId}'</span>,</div>
+                                <div>phone: <span class="text-amber-400">'${call.phone}'</span>,</div>
+                                <div>extension: <span class="text-emerald-400 font-bold">'${call.ext}'</span>,</div>
+                                <div>template: <span class="text-purple-400">'${call.template}'</span></div>
+                            </div>
+                            <div class="text-emerald-400 font-bold">}</div>
+                        </div>
+                    ` : '';
+
+                    return `
+                        <div class="p-3 border-b border-bordercol bg-transparent transition-all">
+                            ${cdrWhiteText}
+                            ${greenWhatsAppBlock}
+                        </div>
+                    `;
+                } 
+                
+                // For 2001, 2002, and 2001&2002 tabs: ONLY show the isolated green whatsapp blocks matching screenshot image_9a95cb.png
+                else {
+                    return `
+                        <div class="p-3 mb-3 rounded-xl border border-emerald-500/50 bg-emerald-950/10 transition-all">
+                            <div class="text-emerald-400 font-bold">[${call.time}] whatsapp_sending {</div>
+                            <div class="pl-4 space-y-0.5 text-emerald-300">
                                 <div>callId: <span class="text-cyan-400">'${call.callId}'</span>,</div>
                                 <div>phone: <span class="text-amber-400">'${call.phone}'</span>,</div>
                                 <div>extension: <span class="text-emerald-400 font-bold">'${call.ext}'</span>,</div>
@@ -600,6 +637,7 @@
                     `;
                 }
             }).join('');
+            
             terminalOutput.scrollTop = terminalOutput.scrollHeight;
         }
 
@@ -651,8 +689,7 @@
 
         const logFiles = [
             "collector-2026-11-05.jsonl",
-            "collector-2026-11-04.jsonl",
-            "collector-2026-11-03.jsonl"
+            "collector-2026-11-04.jsonl"
         ];
 
         function openLogBrowserModal() {
@@ -675,8 +712,8 @@
         function selectLogFile(filename) {
             document.getElementById('currentLogFileName').innerText = filename;
             document.getElementById('logViewerContent').innerHTML = `
-                { "receivedAt": "2026-11-05T16:18:41+08:00", "event": "file_loaded", "file": "${filename}", "status": "active" }
-                { "receivedAt": "2026-11-05T16:18:41+08:00", "event": "whatsapp_sending", "phone": "+601157574095", "extension": "2002", "status": "sent" }
+                { "receivedAt": "2026-11-05T17:15:14+08:00", "event": "file_loaded", "file": "${filename}", "status": "active" }
+                { "receivedAt": "2026-11-05T17:15:14+08:00", "event": "whatsapp_sending", "phone": "+60139844304", "extension": "2002", "status": "sent" }
             `;
             closeLogBrowserModal();
         }
