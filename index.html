@@ -134,10 +134,12 @@
                         <i class="fa-solid fa-square-rss text-emerald-400 animate-pulse"></i>
                         <span>Live Terminal Stream — node app.js</span>
                     </div>
-                    <div class="flex items-center gap-1.5 bg-darkbg p-1 rounded-xl border border-bordercol text-xs">
-                        <button onclick="setFilter('all')" id="filterBtn-all" class="px-3 py-1 rounded-lg bg-emerald-600 text-white font-medium transition-colors">All</button>
-                        <button onclick="setFilter('2001')" id="filterBtn-2001" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white transition-colors">Ext 2001</button>
-                        <button onclick="setFilter('2002')" id="filterBtn-2002" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white transition-colors">Ext 2002</button>
+                    <!-- STREAM FILTERS -->
+                    <div class="flex items-center gap-1 bg-darkbg p-1 rounded-xl border border-bordercol text-xs">
+                        <button onclick="setFilter('all')" id="filterBtn-all" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-medium transition-colors">All</button>
+                        <button onclick="setFilter('2001')" id="filterBtn-2001" class="px-2.5 py-1 rounded-lg text-gray-400 hover:text-white transition-colors">2001</button>
+                        <button onclick="setFilter('2002')" id="filterBtn-2002" class="px-2.5 py-1 rounded-lg text-gray-400 hover:text-white transition-colors">2002</button>
+                        <button onclick="setFilter('2001_2002')" id="filterBtn-2001_2002" class="px-2.5 py-1 rounded-lg text-gray-400 hover:text-white transition-colors">2001 & 2002</button>
                     </div>
                 </div>
 
@@ -266,7 +268,7 @@
             </div>
             
             <div class="space-y-6">
-                <!-- Change Password Form -->
+                <!-- Change Password Form (Visible to All) -->
                 <div class="bg-cardbg/50 border border-bordercol p-4 rounded-xl">
                     <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3"><i class="fa-solid fa-key text-amber-400 mr-1.5"></i> Change My Password</h4>
                     <form onsubmit="handleChangePassword(event)" class="space-y-3">
@@ -282,7 +284,7 @@
                     </form>
                 </div>
 
-                <!-- Super Admin Section: Add New User & Reset User Password -->
+                <!-- Super Admin Section (Boxes 2 & 3: ONLY Visible to syahrul.nizam) -->
                 <div id="superAdminContainer" class="space-y-4 hidden">
                     <!-- Add New User Form -->
                     <div class="bg-cardbg/50 border border-bordercol p-4 rounded-xl">
@@ -338,7 +340,6 @@
     <script>
         const defaultPassword = "Xox@2026!@";
         
-        // List of all 10 authorized usernames
         let masterUsers = [
             "syahrul.nizam",
             "asriza.anwar",
@@ -352,11 +353,9 @@
             "nur.syafiqa"
         ];
 
-        // Load custom users & passwords from localStorage
         let savedPasswords = JSON.parse(localStorage.getItem('xox_passv4')) || {};
         let savedExtraUsers = JSON.parse(localStorage.getItem('xox_extrav4')) || [];
         
-        // Merge extra users
         savedExtraUsers.forEach(u => {
             if (!masterUsers.includes(u)) masterUsers.push(u);
         });
@@ -370,8 +369,6 @@
             const errBox = document.getElementById('loginError');
 
             const user = rawUser.trim().toLowerCase();
-
-            // Check if user is authorized
             const isAuthorized = masterUsers.includes(user) || savedPasswords[user] !== undefined;
 
             if (!isAuthorized) {
@@ -379,7 +376,6 @@
                 return;
             }
 
-            // Check password (either default Xox@2026!@ or custom set password)
             const customPass = savedPasswords[user];
             const isValidPassword = (pass === defaultPassword) || (customPass && pass === customPass);
 
@@ -459,6 +455,7 @@
 
         function openUserManagementModal() {
             const superAdminContainer = document.getElementById('superAdminContainer');
+            // STRICT PERMISSION: Only syahrul.nizam can see boxes 2 and 3
             if (currentLoggedInUser === 'syahrul.nizam') {
                 superAdminContainer.classList.remove('hidden');
             } else {
@@ -471,7 +468,7 @@
             document.getElementById('userManagementModal').classList.add('hidden');
         }
 
-        // Live Terminal Stream with Filtering
+        // Live Terminal Stream with Filtering (Including '2001 & 2002')
         const allCalls = [
             { ext: '2001', phone: '+60166237566', callId: '00000000-01dd-6cca-2903-e6af0000a021', template: 'greeting1_en' },
             { ext: '2002', phone: '+60127604686', callId: '00000000-01dd-6ccd-3b35-b5550000a06c', template: 'greeting1_bm' },
@@ -485,12 +482,14 @@
 
         function setFilter(filterType) {
             currentFilter = filterType;
-            ['all', '2001', '2002'].forEach(f => {
+            ['all', '2001', '2002', '2001_2002'].forEach(f => {
                 const btn = document.getElementById(`filterBtn-${f}`);
-                if (f === filterType) {
-                    btn.className = "px-3 py-1 rounded-lg bg-emerald-600 text-white font-medium transition-colors";
-                } else {
-                    btn.className = "px-3 py-1 rounded-lg text-gray-400 hover:text-white transition-colors";
+                if (btn) {
+                    if (f === filterType) {
+                        btn.className = "px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-medium transition-colors";
+                    } else {
+                        btn.className = "px-2.5 py-1 rounded-lg text-gray-400 hover:text-white transition-colors";
+                    }
                 }
             });
             renderTerminal();
@@ -510,11 +509,14 @@
             const terminalOutput = document.getElementById('terminalOutput');
             const filtered = terminalEntries.filter(entry => {
                 if (currentFilter === 'all') return true;
-                return entry.ext === currentFilter;
+                if (currentFilter === '2001') return entry.ext === '2001';
+                if (currentFilter === '2002') return entry.ext === '2002';
+                if (currentFilter === '2001_2002') return entry.ext === '2001' || entry.ext === '2002';
+                return true;
             });
 
             if (filtered.length === 0) {
-                terminalOutput.innerHTML = `<div class="text-gray-500 italic"># No logs matching filter Ext ${currentFilter}...</div>`;
+                terminalOutput.innerHTML = `<div class="text-gray-500 italic"># No logs matching filter...</div>`;
                 return;
             }
 
@@ -620,7 +622,7 @@
             closeLogBrowserModal();
         }
 
-        function copyLogContent() {
+        fn = function copyLogContent() {
             navigator.clipboard.writeText(document.getElementById('logViewerContent').innerText);
             alert('JSON log content copied to clipboard!');
         }
