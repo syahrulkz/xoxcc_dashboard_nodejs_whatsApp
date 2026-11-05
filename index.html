@@ -467,7 +467,7 @@
             document.getElementById('userManagementModal').classList.add('hidden');
         }
 
-        // Live Terminal Stream with strict Asia/Kuala_Lumpur (GMT+8) timezone formatting
+        // Live Terminal Stream with Real-time Malaysia Time Generation
         const allCalls = [
             { ext: '2001', phone: '+60166237566', callId: '00000000-01dd-6cca-2903-e6af0000a021', template: 'greeting1_en' },
             { ext: '2002', phone: '+60127604686', callId: '00000000-01dd-6ccd-3b35-b5550000a06c', template: 'greeting1_bm' },
@@ -479,6 +479,37 @@
 
         let currentFilter = 'all';
         let terminalEntries = [];
+
+        // Helper to format any date into strict Malaysia Time (GMT+8) string
+        function getMalaysiaTimeString(dateObj) {
+            const formatter = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Asia/Kuala_Lumpur',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            const parts = formatter.formatToParts(dateObj);
+            const p = {};
+            parts.forEach(item => p[item.type] = item.value);
+            return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}+08:00`;
+        }
+
+        // Initialize historical mock logs descending backwards from current live time
+        function initInitialLogs() {
+            let currentTime = new Date();
+            for (let i = 0; i < 5; i++) {
+                const timeStr = getMalaysiaTimeString(currentTime);
+                const call = allCalls[Math.floor(Math.random() * allCalls.length)];
+                terminalEntries.unshift({ time: timeStr, ...call }); // Older items pushed to top/back
+                // Step back 4 seconds for each historical item
+                currentTime = new Date(currentTime.getTime() - 4000);
+            }
+        }
+        initInitialLogs();
 
         function setFilter(filterType) {
             currentFilter = filterType;
@@ -496,27 +527,13 @@
         }
 
         function appendLogLine() {
-            // Strict Malaysia Local Time (GMT+8) generation using Intl.DateTimeFormat
+            // Generate exact current live Malaysia time for new incoming calls
             const now = new Date();
-            const formatter = new Intl.DateTimeFormat('en-CA', {
-                timeZone: 'Asia/Kuala_Lumpur',
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
-            });
-            const parts = formatter.formatToParts(now);
-            const dateObj = {};
-            parts.forEach(p => dateObj[p.type] = p.value);
-            const timeStr = `${dateObj.year}-${dateObj.month}-${dateObj.day}T${dateObj.hour}:${dateObj.minute}:${dateObj.second}+08:00`;
-            
+            const timeStr = getMalaysiaTimeString(now);
             const call = allCalls[Math.floor(Math.random() * allCalls.length)];
             
             terminalEntries.push({ time: timeStr, ...call });
-            if (terminalEntries.length > 40) terminalEntries.shift();
+            if (terminalEntries.length > 50) terminalEntries.shift();
             renderTerminal();
         }
 
@@ -557,7 +574,7 @@
         }
 
         setInterval(appendLogLine, 2200);
-        for(let i=0; i<3; i++) appendLogLine();
+        renderTerminal();
 
         function checkNodeStatus() {
             const badge = document.getElementById('nodeStatusBadge');
