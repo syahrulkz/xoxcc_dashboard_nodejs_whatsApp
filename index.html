@@ -268,7 +268,7 @@
             </div>
             
             <div class="space-y-6">
-                <!-- Change Password Form (Visible to All) -->
+                <!-- Change Password Form (Visible to All Users) -->
                 <div class="bg-cardbg/50 border border-bordercol p-4 rounded-xl">
                     <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3"><i class="fa-solid fa-key text-amber-400 mr-1.5"></i> Change My Password</h4>
                     <form onsubmit="handleChangePassword(event)" class="space-y-3">
@@ -455,7 +455,7 @@
 
         function openUserManagementModal() {
             const superAdminContainer = document.getElementById('superAdminContainer');
-            // STRICT PERMISSION: Only syahrul.nizam can see boxes 2 and 3
+            // STRICT PERMISSION: Only syahrul.nizam can see Super Admin boxes
             if (currentLoggedInUser === 'syahrul.nizam') {
                 superAdminContainer.classList.remove('hidden');
             } else {
@@ -468,7 +468,7 @@
             document.getElementById('userManagementModal').classList.add('hidden');
         }
 
-        // Live Terminal Stream with Filtering (Including '2001 & 2002')
+        // Live Terminal Stream with Strict Filtering
         const allCalls = [
             { ext: '2001', phone: '+60166237566', callId: '00000000-01dd-6cca-2903-e6af0000a021', template: 'greeting1_en' },
             { ext: '2002', phone: '+60127604686', callId: '00000000-01dd-6ccd-3b35-b5550000a06c', template: 'greeting1_bm' },
@@ -622,7 +622,7 @@
             closeLogBrowserModal();
         }
 
-        fn = function copyLogContent() {
+        function copyLogContent() {
             navigator.clipboard.writeText(document.getElementById('logViewerContent').innerText);
             alert('JSON log content copied to clipboard!');
         }
