@@ -154,7 +154,7 @@
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
                         <span>Live streaming CDR events & WhatsApp gateway...</span>
                     </div>
-                    <span class="text-emerald-400 font-semibold font-mono">Active Target Ext: 2001, 2002</span>
+                    <span class="text-emerald-400 font-semibold font-mono">Active Target Ext: All & Filtered</span>
                 </div>
             </section>
 
@@ -468,13 +468,14 @@
             document.getElementById('userManagementModal').classList.add('hidden');
         }
 
-        // Live Terminal Stream with Strict Filtering
+        // Live Terminal Stream with Full 'All' and Precise Filtering
         const allCalls = [
             { ext: '2001', phone: '+60166237566', callId: '00000000-01dd-6cca-2903-e6af0000a021', template: 'greeting1_en' },
             { ext: '2002', phone: '+60127604686', callId: '00000000-01dd-6ccd-3b35-b5550000a06c', template: 'greeting1_bm' },
             { ext: '3000', phone: '+60103300404', callId: '00000000-01dd-6ccd-4f12-5c8d00042570', template: 'welcome_xox' },
-            { ext: '2001', phone: '+60147543702', callId: '00000000-01dd-6ccd-0daa-912200042545', template: 'greeting1_en' },
-            { ext: '2002', phone: '+6018411602', callId: '00000000-01dd-6ccd-37d4-b986000425d8', template: 'greeting1_bm' }
+            { ext: '1041', phone: '+60147543702', callId: '00000000-01dd-6ccd-0daa-912200042545', template: 'internal_transfer' },
+            { ext: '2001', phone: '+601113095805', callId: '00000000-01dd-6cf7-eac9-cba0000442f3', template: 'greeting1_en' },
+            { ext: '2002', phone: '+60122716459', callId: '00000000-01dd-6cf9-135c-0672000443e4', template: 'greeting1_bm' }
         ];
 
         let currentFilter = 'all';
@@ -508,7 +509,7 @@
         function renderTerminal() {
             const terminalOutput = document.getElementById('terminalOutput');
             const filtered = terminalEntries.filter(entry => {
-                if (currentFilter === 'all') return true;
+                if (currentFilter === 'all') return true; // Show ALL incoming calls without restriction
                 if (currentFilter === '2001') return entry.ext === '2001';
                 if (currentFilter === '2002') return entry.ext === '2002';
                 if (currentFilter === '2001_2002') return entry.ext === '2001' || entry.ext === '2002';
