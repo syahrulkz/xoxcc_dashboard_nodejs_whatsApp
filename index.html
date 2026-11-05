@@ -63,7 +63,7 @@
             </form>
 
             <div class="mt-4 text-center">
-                <span class="text-xs text-gray-400">Forgot Password? <strong class="text-gray-300">Please contact your administrator</strong></span>
+                <span class="text-xs text-gray-400">Forgot Password? <strong class="text-gray-300">Please contact admin for access</strong></span>
             </div>
         </div>
     </div>
@@ -320,19 +320,24 @@
 
         const defaultPasswordHash = "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d";
         
-        // Authorized users mapping with @xox.com.my domain emails
-        let authorizedUsers = JSON.parse(localStorage.getItem('xox_users')) || {
-            "syahrul.nizam": defaultPasswordHash, // Sole Admin (syahrul.nizam@xox.com.my)
-            "asriza.anwar":  defaultPasswordHash, // asriza.anwar@xox.com.my
-            "asrul.rezman":  defaultPasswordHash, // asrul.rezman@xox.com.my
-            "ardina":        defaultPasswordHash, // ardina@xox.com.my
-            "saputra.hanim": defaultPasswordHash, // saputra.hanim@xox.com.my
-            "zaid.amirul":   defaultPasswordHash, // zaid.amirul@xox.com.my
-            "suffian":       defaultPasswordHash, // suffian@xox.com.my
-            "hk.lim":        defaultPasswordHash, // hk.lim@xox.com.my
-            "asri.syafiq":   defaultPasswordHash, // asri.syafiq@xox.com.my
-            "nur.syafiqa":   defaultPasswordHash  // nur.syafiqa@xox.com.my
+        // Force refresh authorized users list to ensure all 10 user accounts are fully enabled
+        const masterUserList = {
+            "syahrul.nizam": defaultPasswordHash,
+            "asriza.anwar":  defaultPasswordHash,
+            "asrul.rezman":  defaultPasswordHash,
+            "ardina":        defaultPasswordHash,
+            "saputra.hanim": defaultPasswordHash,
+            "zaid.amirul":   defaultPasswordHash,
+            "suffian":       defaultPasswordHash,
+            "hk.lim":        defaultPasswordHash,
+            "asri.syafiq":   defaultPasswordHash,
+            "nur.syafiqa":   defaultPasswordHash
         };
+
+        // Sync with localStorage while keeping master accounts intact
+        let storedUsers = JSON.parse(localStorage.getItem('xox_users')) || {};
+        let authorizedUsers = { ...masterUserList, ...storedUsers };
+        localStorage.setItem('xox_users', JSON.stringify(authorizedUsers));
 
         let currentLoggedInUser = "";
 
