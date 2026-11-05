@@ -152,9 +152,9 @@
                 <div class="bg-cardbg/30 border-t border-bordercol px-4 py-2.5 flex items-center justify-between text-xs text-gray-400">
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                        <span>Live streaming GMT+8 CDR events & WhatsApp gateway...</span>
+                        <span>Live streaming Malaysia Local Time (GMT+8)...</span>
                     </div>
-                    <span class="text-emerald-400 font-semibold font-mono">Timezone: GMT+8</span>
+                    <span class="text-emerald-400 font-semibold font-mono">TZ: Asia/Kuala_Lumpur</span>
                 </div>
             </section>
 
@@ -467,7 +467,7 @@
             document.getElementById('userManagementModal').classList.add('hidden');
         }
 
-        // Live Terminal Stream with GMT+8 Timezone Formatting
+        // Live Terminal Stream with strict Asia/Kuala_Lumpur (GMT+8) timezone formatting
         const allCalls = [
             { ext: '2001', phone: '+60166237566', callId: '00000000-01dd-6cca-2903-e6af0000a021', template: 'greeting1_en' },
             { ext: '2002', phone: '+60127604686', callId: '00000000-01dd-6ccd-3b35-b5550000a06c', template: 'greeting1_bm' },
@@ -496,11 +496,22 @@
         }
 
         function appendLogLine() {
-            // Generate exact GMT+8 timestamp
+            // Strict Malaysia Local Time (GMT+8) generation using Intl.DateTimeFormat
             const now = new Date();
-            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const gmt8Date = new Date(utc + (3600000 * 8));
-            const timeStr = gmt8Date.toISOString().replace('Z', '+08:00').split('.')[0];
+            const formatter = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Asia/Kuala_Lumpur',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            const parts = formatter.formatToParts(now);
+            const dateObj = {};
+            parts.forEach(p => dateObj[p.type] = p.value);
+            const timeStr = `${dateObj.year}-${dateObj.month}-${dateObj.day}T${dateObj.hour}:${dateObj.minute}:${dateObj.second}+08:00`;
             
             const call = allCalls[Math.floor(Math.random() * allCalls.length)];
             
