@@ -336,51 +336,52 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        // SHA-256 Hashing Utility
-        async function sha256(message) {
-            const msgBuffer = new TextEncoder().encode(message);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-
-        const defaultPasswordHash = "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d"; // Hash for Xox@2026!@
+        // Default Master Password
+        const defaultPassword = "Xox@2026!@";
         
-        // Complete Master List of All Authorized Users
-        const masterUsers = {
-            "syahrul.nizam": defaultPasswordHash,
-            "asriza.anwar":  defaultPasswordHash,
-            "asrul.rezman":  defaultPasswordHash,
-            "ardina":        defaultPasswordHash,
-            "saputra.hanim": defaultPasswordHash,
-            "zaid.amirul":   defaultPasswordHash,
-            "suffian":       defaultPasswordHash,
-            "hk.lim":        defaultPasswordHash,
-            "asri.syafiq":   defaultPasswordHash,
-            "nur.syafiqa":   defaultPasswordHash
-        };
+        // Master hardcoded list of all 10 accounts mapped directly to plain-text / dynamic check
+        const masterUsers = [
+            "syahrul.nizam",
+            "asriza.anwar",
+            "asrul.rezman",
+            "ardina",
+            "saputra.hanim",
+            "zaid.amirul",
+            "suffian",
+            "hk.lim",
+            "asri.syafiq",
+            "nur.syafiqa"
+        ];
 
-        // Initialize and clean up user database directly on load
-        let storedUsers = JSON.parse(localStorage.getItem('xox_users_v2')) || {};
-        let authorizedUsers = { ...masterUsers, ...storedUsers };
-        localStorage.setItem('xox_users_v2', JSON.stringify(authorizedUsers));
+        // Retrieve custom passwords stored in localStorage or initialize fresh
+        let customPasswords = JSON.parse(localStorage.getItem('xox_passwords_v3')) || {};
 
         let currentLoggedInUser = "";
 
-        // Login Handler
-        async function handleLogin(event) {
+        // Login Handler (Simplified and robust)
+        function handleLogin(event) {
             event.preventDefault();
             const user = document.getElementById('usernameInput').value.trim().toLowerCase();
             const pass = document.getElementById('passwordInput').value;
             const errBox = document.getElementById('loginError');
 
-            if (!authorizedUsers[user]) {
-                errBox.classList.remove('hidden');
-                return;
+            // Check if user exists in master list or custom storage
+            const isMasterUser = masterUsers.includes(user);
+            const savedCustomPass = customPasswords[user];
+
+            let isValid = false;
+
+            if (isMasterUser) {
+                // Master users accept either custom set password or defaultPassword
+                if (pass === defaultPassword || (savedCustomPass && pass === savedCustomPass)) {
+                    isValid = true;
+                }
+            } else if (savedCustomPass && pass === savedCustomPass) {
+                // Dynamically added users
+                isValid = true;
             }
 
-            const hashedInputPass = await sha256(pass);
-            if (hashedInputPass === authorizedUsers[user]) {
+            if (isValid) {
                 currentLoggedInUser = user;
                 document.getElementById('authModal').classList.add('hidden');
                 const mainDash = document.getElementById('mainDashboard');
@@ -402,13 +403,12 @@
         }
 
         // Change Password Handler (Self)
-        async function handleChangePassword(event) {
+        function handleChangePassword(event) {
             event.preventDefault();
             const newPass = document.getElementById('newPasswordInput').value;
-            const newHash = await sha256(newPass);
             
-            authorizedUsers[currentLoggedInUser] = newHash;
-            localStorage.setItem('xox_users_v2', JSON.stringify(authorizedUsers));
+            customPasswords[currentLoggedInUser] = newPass;
+            localStorage.setItem('xox_passwords_v3', JSON.stringify(customPasswords));
             
             const msg = document.getElementById('passChangeMsg');
             msg.classList.remove('hidden');
@@ -417,14 +417,17 @@
         }
 
         // Add New User Handler (Super Admin Only: syahrul.nizam)
-        async function handleAddNewUser(event) {
+        function handleAddNewUser(event) {
             event.preventDefault();
             const newUser = document.getElementById('newUsernameInput').value.trim().toLowerCase();
             const newPass = document.getElementById('newUserPassInput').value;
 
-            const newHash = await sha256(newPass);
-            authorizedUsers[newUser] = newHash;
-            localStorage.setItem('xox_users_v2', JSON.stringify(authorizedUsers));
+            if (!masterUsers.includes(newUser)) {
+                masterUsers.push(newUser);
+            }
+            customPasswords[newUser] = newPass;
+            localStorage.setItem('xox_passwords_v3', JSON.stringify(customPasswords));
+            localStorage.setItem('xox_extra_users', JSON.stringify(masterUsers));
 
             const msg = document.getElementById('userAddMsg');
             msg.classList.remove('hidden');
@@ -433,16 +436,15 @@
         }
 
         // Reset Any User Password (Super Admin Only: syahrul.nizam)
-        async function handleResetUserPassword(event) {
+        function handleResetUserPassword(event) {
             event.preventDefault();
             const targetUser = document.getElementById('resetUsernameInput').value.trim().toLowerCase();
             const newPass = document.getElementById('resetPasswordInput').value;
             const msg = document.getElementById('userResetMsg');
 
-            if (authorizedUsers[targetUser] !== undefined) {
-                const newHash = await sha256(newPass);
-                authorizedUsers[targetUser] = newHash;
-                localStorage.setItem('xox_users_v2', JSON.stringify(authorizedUsers));
+            if (masterUsers.includes(targetUser) || customPasswords[targetUser] !== undefined) {
+                customPasswords[targetUser] = newPass;
+                localStorage.setItem('xox_passwords_v3', JSON.stringify(customPasswords));
                 msg.innerText = `Password reset successfully for ${targetUser}!`;
                 msg.classList.remove('hidden', 'text-rose-400');
                 msg.classList.add('text-emerald-400');
@@ -562,7 +564,7 @@
         // PowerShell Test-NetConnection simulator
         function runTestNetConnection() {
             const ip = document.getElementById('targetIpInput').value;
-            const port = document.getElementById('targetPortInput').value;
+            const port = document.getElementById('targetPortInput'].value;
             const psOutput = document.getElementById('psOutputContainer');
             
             psOutput.innerHTML = `<span class="text-gray-500">Testing connection to ${ip} on port ${port}...</span>`;
