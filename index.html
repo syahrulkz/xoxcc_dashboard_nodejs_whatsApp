@@ -282,27 +282,53 @@
                     </form>
                 </div>
 
-                <!-- Add New User Form (SOLE ADMIN: syahrul.nizam ONLY) -->
-                <div id="adminUserAddContainer" class="bg-cardbg/50 border border-bordercol p-4 rounded-xl hidden">
-                    <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3"><i class="fa-solid fa-user-plus text-cyan-400 mr-1.5"></i> Add New Authorized User (Admin Only)</h4>
-                    <form onsubmit="handleAddNewUser(event)" class="space-y-3">
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[11px] text-gray-400 mb-1">Username</label>
-                                <input type="text" id="newUsernameInput" required placeholder="e.g. johndoe" 
-                                    class="w-full bg-darkbg border border-bordercol rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500">
+                <!-- Super Admin Section: Add New User & Reset User Password -->
+                <div id="superAdminContainer" class="space-y-4 hidden">
+                    <!-- Add New User Form -->
+                    <div class="bg-cardbg/50 border border-bordercol p-4 rounded-xl">
+                        <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3"><i class="fa-solid fa-user-plus text-cyan-400 mr-1.5"></i> Add New User (Super Admin)</h4>
+                        <form onsubmit="handleAddNewUser(event)" class="space-y-3">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[11px] text-gray-400 mb-1">Username</label>
+                                    <input type="text" id="newUsernameInput" required placeholder="e.g. johndoe" 
+                                        class="w-full bg-darkbg border border-bordercol rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] text-gray-400 mb-1">Initial Password</label>
+                                    <input type="text" id="newUserPassInput" required value="Xox@2026!@" 
+                                        class="w-full bg-darkbg border border-bordercol rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500">
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-[11px] text-gray-400 mb-1">Initial Password</label>
-                                <input type="text" id="newUserPassInput" required value="Xox@2026!@" 
-                                    class="w-full bg-darkbg border border-bordercol rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500">
+                            <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-2 rounded-lg text-xs font-medium transition-colors">
+                                Register User
+                            </button>
+                            <div id="userAddMsg" class="text-[11px] text-emerald-400 hidden mt-1">New user registered successfully!</div>
+                        </form>
+                    </div>
+
+                    <!-- Reset Any User Password Form -->
+                    <div class="bg-cardbg/50 border border-bordercol p-4 rounded-xl">
+                        <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3"><i class="fa-solid fa-user-gear text-emerald-400 mr-1.5"></i> Reset User Password (Super Admin)</h4>
+                        <form onsubmit="handleResetUserPassword(event)" class="space-y-3">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[11px] text-gray-400 mb-1">Target Username</label>
+                                    <input type="text" id="resetUsernameInput" required placeholder="e.g. asriza.anwar" 
+                                        class="w-full bg-darkbg border border-bordercol rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] text-gray-400 mb-1">New Password</label>
+                                    <input type="text" id="resetPasswordInput" required value="Xox@2026!@" 
+                                        class="w-full bg-darkbg border border-bordercol rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                                </div>
                             </div>
-                        </div>
-                        <button type="submit" class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors">
-                            Register User
-                        </button>
-                        <div id="userAddMsg" class="text-[11px] text-emerald-400 hidden mt-1">New user added successfully!</div>
-                    </form>
+                            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg text-xs font-medium transition-colors">
+                                Reset Password
+                            </button>
+                            <div id="userResetMsg" class="text-[11px] text-emerald-400 hidden mt-1">User password reset successfully!</div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -320,7 +346,7 @@
 
         const defaultPasswordHash = "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d";
         
-        // Force refresh authorized users list to ensure all 10 user accounts are fully enabled
+        // Master hardcoded list with syahrul.nizam as Super Admin
         const masterUserList = {
             "syahrul.nizam": defaultPasswordHash,
             "asriza.anwar":  defaultPasswordHash,
@@ -334,7 +360,7 @@
             "nur.syafiqa":   defaultPasswordHash
         };
 
-        // Sync with localStorage while keeping master accounts intact
+        // Always enforce master list and merge with local additions
         let storedUsers = JSON.parse(localStorage.getItem('xox_users')) || {};
         let authorizedUsers = { ...masterUserList, ...storedUsers };
         localStorage.setItem('xox_users', JSON.stringify(authorizedUsers));
@@ -375,7 +401,7 @@
             document.getElementById('usernameInput').value = "";
         }
 
-        // Change Password Handler
+        // Change Password Handler (Self)
         async function handleChangePassword(event) {
             event.preventDefault();
             const newPass = document.getElementById('newPasswordInput').value;
@@ -390,7 +416,7 @@
             document.getElementById('newPasswordInput').value = '';
         }
 
-        // Add New User Handler (Sole Admin Only: syahrul.nizam)
+        // Add New User Handler (Super Admin Only: syahrul.nizam)
         async function handleAddNewUser(event) {
             event.preventDefault();
             const newUser = document.getElementById('newUsernameInput').value.trim().toLowerCase();
@@ -406,13 +432,36 @@
             document.getElementById('newUsernameInput').value = '';
         }
 
-        function openUserManagementModal() {
-            // Show Add User section ONLY if logged in as sole admin: syahrul.nizam
-            const adminContainer = document.getElementById('adminUserAddContainer');
-            if (currentLoggedInUser === 'syahrul.nizam') {
-                adminContainer.classList.remove('hidden');
+        // Reset Any User Password (Super Admin Only: syahrul.nizam)
+        async function handleResetUserPassword(event) {
+            event.preventDefault();
+            const targetUser = document.getElementById('resetUsernameInput').value.trim().toLowerCase();
+            const newPass = document.getElementById('resetPasswordInput').value;
+            const msg = document.getElementById('userResetMsg');
+
+            if (authorizedUsers[targetUser] !== undefined) {
+                const newHash = await sha256(newPass);
+                authorizedUsers[targetUser] = newHash;
+                localStorage.setItem('xox_users', JSON.stringify(authorizedUsers));
+                msg.innerText = `Password reset successfully for ${targetUser}!`;
+                msg.classList.remove('hidden', 'text-rose-400');
+                msg.classList.add('text-emerald-400');
             } else {
-                adminContainer.classList.add('hidden');
+                msg.innerText = `User '${targetUser}' not found!`;
+                msg.classList.remove('hidden', 'text-emerald-400');
+                msg.classList.add('text-rose-400');
+            }
+            setTimeout(() => msg.classList.add('hidden'), 3500);
+            document.getElementById('resetUsernameInput').value = '';
+        }
+
+        function openUserManagementModal() {
+            // Show Super Admin options ONLY if logged in as syahrul.nizam
+            const superAdminContainer = document.getElementById('superAdminContainer');
+            if (currentLoggedInUser === 'syahrul.nizam') {
+                superAdminContainer.classList.remove('hidden');
+            } else {
+                superAdminContainer.classList.add('hidden');
             }
             document.getElementById('userManagementModal').classList.remove('hidden');
         }
