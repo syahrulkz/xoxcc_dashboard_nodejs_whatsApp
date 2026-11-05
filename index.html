@@ -275,7 +275,7 @@
                             <input type="password" id="newPasswordInput" required placeholder="Enter new password" 
                                 class="w-full bg-darkbg border border-bordercol rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
                         </div>
-                        <button type="submit" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors">
+                        <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 text-white py-2 rounded-lg text-xs font-medium transition-colors">
                             Update Password
                         </button>
                         <div id="passChangeMsg" class="text-[11px] text-emerald-400 hidden mt-1">Password updated successfully!</div>
@@ -320,7 +320,7 @@
                                 <div>
                                     <label class="block text-[11px] text-gray-400 mb-1">New Password</label>
                                     <input type="text" id="resetPasswordInput" required value="Xox@2026!@" 
-                                        class="w-full bg-darkbg border border-bordercol rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                                        class="w-full bg-darkbg border border-bordercol rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500">
                                 </div>
                             </div>
                             <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg text-xs font-medium transition-colors">
@@ -344,10 +344,10 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        const defaultPasswordHash = "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d";
+        const defaultPasswordHash = "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d"; // Hash for Xox@2026!@
         
-        // Master hardcoded list with syahrul.nizam as Super Admin
-        const masterUserList = {
+        // Complete Master List of All Authorized Users
+        const masterUsers = {
             "syahrul.nizam": defaultPasswordHash,
             "asriza.anwar":  defaultPasswordHash,
             "asrul.rezman":  defaultPasswordHash,
@@ -360,10 +360,10 @@
             "nur.syafiqa":   defaultPasswordHash
         };
 
-        // Always enforce master list and merge with local additions
-        let storedUsers = JSON.parse(localStorage.getItem('xox_users')) || {};
-        let authorizedUsers = { ...masterUserList, ...storedUsers };
-        localStorage.setItem('xox_users', JSON.stringify(authorizedUsers));
+        // Initialize and clean up user database directly on load
+        let storedUsers = JSON.parse(localStorage.getItem('xox_users_v2')) || {};
+        let authorizedUsers = { ...masterUsers, ...storedUsers };
+        localStorage.setItem('xox_users_v2', JSON.stringify(authorizedUsers));
 
         let currentLoggedInUser = "";
 
@@ -408,7 +408,7 @@
             const newHash = await sha256(newPass);
             
             authorizedUsers[currentLoggedInUser] = newHash;
-            localStorage.setItem('xox_users', JSON.stringify(authorizedUsers));
+            localStorage.setItem('xox_users_v2', JSON.stringify(authorizedUsers));
             
             const msg = document.getElementById('passChangeMsg');
             msg.classList.remove('hidden');
@@ -424,7 +424,7 @@
 
             const newHash = await sha256(newPass);
             authorizedUsers[newUser] = newHash;
-            localStorage.setItem('xox_users', JSON.stringify(authorizedUsers));
+            localStorage.setItem('xox_users_v2', JSON.stringify(authorizedUsers));
 
             const msg = document.getElementById('userAddMsg');
             msg.classList.remove('hidden');
@@ -442,7 +442,7 @@
             if (authorizedUsers[targetUser] !== undefined) {
                 const newHash = await sha256(newPass);
                 authorizedUsers[targetUser] = newHash;
-                localStorage.setItem('xox_users', JSON.stringify(authorizedUsers));
+                localStorage.setItem('xox_users_v2', JSON.stringify(authorizedUsers));
                 msg.innerText = `Password reset successfully for ${targetUser}!`;
                 msg.classList.remove('hidden', 'text-rose-400');
                 msg.classList.add('text-emerald-400');
