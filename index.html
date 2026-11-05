@@ -84,7 +84,7 @@
                             <span id="nodeStatusText">ONLINE</span>
                         </span>
                     </div>
-                    <p class="text-xs text-gray-400">Asia/Kuala_Lumpur • Node.js Server & Collector Hub</p>
+                    <p class="text-xs text-gray-400">Asia/Kuala_Lumpur (GMT+8) • Node.js Server & Collector Hub</p>
                 </div>
             </div>
 
@@ -152,9 +152,9 @@
                 <div class="bg-cardbg/30 border-t border-bordercol px-4 py-2.5 flex items-center justify-between text-xs text-gray-400">
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                        <span>Live streaming CDR events & WhatsApp gateway...</span>
+                        <span>Live streaming GMT+8 CDR events & WhatsApp gateway...</span>
                     </div>
-                    <span class="text-emerald-400 font-semibold font-mono">Active Target Ext: All & Filtered</span>
+                    <span class="text-emerald-400 font-semibold font-mono">Timezone: GMT+8</span>
                 </div>
             </section>
 
@@ -455,7 +455,6 @@
 
         function openUserManagementModal() {
             const superAdminContainer = document.getElementById('superAdminContainer');
-            // STRICT PERMISSION: Only syahrul.nizam can see Super Admin boxes
             if (currentLoggedInUser === 'syahrul.nizam') {
                 superAdminContainer.classList.remove('hidden');
             } else {
@@ -468,7 +467,7 @@
             document.getElementById('userManagementModal').classList.add('hidden');
         }
 
-        // Live Terminal Stream with Full 'All' and Precise Filtering
+        // Live Terminal Stream with GMT+8 Timezone Formatting
         const allCalls = [
             { ext: '2001', phone: '+60166237566', callId: '00000000-01dd-6cca-2903-e6af0000a021', template: 'greeting1_en' },
             { ext: '2002', phone: '+60127604686', callId: '00000000-01dd-6ccd-3b35-b5550000a06c', template: 'greeting1_bm' },
@@ -497,8 +496,12 @@
         }
 
         function appendLogLine() {
+            // Generate exact GMT+8 timestamp
             const now = new Date();
-            const timeStr = now.toISOString().replace('Z', '+08:00').split('.')[0];
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const gmt8Date = new Date(utc + (3600000 * 8));
+            const timeStr = gmt8Date.toISOString().replace('Z', '+08:00').split('.')[0];
+            
             const call = allCalls[Math.floor(Math.random() * allCalls.length)];
             
             terminalEntries.push({ time: timeStr, ...call });
@@ -509,7 +512,7 @@
         function renderTerminal() {
             const terminalOutput = document.getElementById('terminalOutput');
             const filtered = terminalEntries.filter(entry => {
-                if (currentFilter === 'all') return true; // Show ALL incoming calls without restriction
+                if (currentFilter === 'all') return true;
                 if (currentFilter === '2001') return entry.ext === '2001';
                 if (currentFilter === '2002') return entry.ext === '2002';
                 if (currentFilter === '2001_2002') return entry.ext === '2001' || entry.ext === '2002';
