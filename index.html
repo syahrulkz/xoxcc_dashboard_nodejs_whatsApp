@@ -60,9 +60,6 @@
                     <i class="fa-solid fa-right-to-bracket"></i> Authenticate Session
                 </button>
             </form>
-            <div class="mt-6 pt-4 border-t border-bordercol text-center">
-                <span class="text-[11px] text-gray-500">Default Password for all users: <strong class="text-emerald-400">Xox@2026!@</strong></span>
-            </div>
         </div>
     </div>
 
@@ -77,8 +74,9 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="font-bold text-base text-white tracking-wide">XOX CDR & Operations Control Center</h1>
-                        <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> ONLINE
+                        <span id="nodeStatusBadge" class="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5">
+                            <span id="nodeStatusDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 
+                            <span id="nodeStatusText">ONLINE</span>
                         </span>
                     </div>
                     <p class="text-xs text-gray-400">Asia/Kuala_Lumpur • Node.js Server & Collector Hub</p>
@@ -115,8 +113,8 @@
                 <button onclick="openUserManagementModal()" class="bg-cardbg hover:bg-cardbg/80 border border-bordercol text-gray-300 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5">
                     <i class="fa-solid fa-users-gear text-emerald-400"></i> User Hub
                 </button>
-                <button onclick="openSettings()" class="w-9 h-9 bg-cardbg border border-bordercol rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition-colors">
-                    <i class="fa-solid fa-gear"></i>
+                <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
                 </button>
             </div>
         </header>
@@ -131,9 +129,10 @@
                         <i class="fa-solid fa-square-rss text-emerald-400 animate-pulse"></i>
                         <span>Live Terminal Stream — node app.js</span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg font-mono font-semibold">Ext 2001 & 2002 Highlighted</span>
-                        <button onclick="clearTerminal()" class="text-xs text-gray-400 hover:text-white px-2.5 py-1 bg-darkbg border border-bordercol rounded-lg transition-colors">Clear</button>
+                    <div class="flex items-center gap-1.5 bg-darkbg p-1 rounded-xl border border-bordercol text-xs">
+                        <button onclick="setFilter('all')" id="filterBtn-all" class="px-3 py-1 rounded-lg bg-emerald-600 text-white font-medium transition-colors">All</button>
+                        <button onclick="setFilter('2001')" id="filterBtn-2001" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white transition-colors">Ext 2001</button>
+                        <button onclick="setFilter('2002')" id="filterBtn-2002" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white transition-colors">Ext 2002</button>
                     </div>
                 </div>
 
@@ -278,9 +277,9 @@
                     </form>
                 </div>
 
-                <!-- Add New User Form -->
-                <div class="bg-cardbg/50 border border-bordercol p-4 rounded-xl">
-                    <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3"><i class="fa-solid fa-user-plus text-cyan-400 mr-1.5"></i> Add New Authorized User</h4>
+                <!-- Add New User Form (ADMIN ONLY VIEW) -->
+                <div id="adminUserAddContainer" class="bg-cardbg/50 border border-bordercol p-4 rounded-xl hidden">
+                    <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3"><i class="fa-solid fa-user-plus text-cyan-400 mr-1.5"></i> Add New Authorized User (Admin Only)</h4>
                     <form onsubmit="handleAddNewUser(event)" class="space-y-3">
                         <div class="grid grid-cols-2 gap-2">
                             <div>
@@ -314,21 +313,19 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // Pre-computed SHA-256 hash for default password: Xox@2026!@
-        // Generated hash: d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d (example hash or dynamic fallback)
-        // We will store user credentials in localStorage or default list
+        const defaultPasswordHash = "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d";
         let authorizedUsers = JSON.parse(localStorage.getItem('xox_users')) || {
-            "syahrul.nizam": "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
-            "asriza.anwar":  "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
-            "asrul.rezman":  "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
-            "ardina":        "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
-            "saputra.hanim": "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
-            "zaid.amirul":   "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
-            "suffian":       "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
-            "hk.lim":        "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
-            "asri.syafiq":   "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
-            "nur.syafiqa":   "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d",
-            "admin":         "d63f6a20d200589a194916ca1f4356e896482aef1e2b5358055bf965c497491d"
+            "syahrul.nizam": defaultPasswordHash,
+            "asriza.anwar":  defaultPasswordHash,
+            "asrul.rezman":  defaultPasswordHash,
+            "ardina":        defaultPasswordHash,
+            "saputra.hanim": defaultPasswordHash,
+            "zaid.amirul":   defaultPasswordHash,
+            "suffian":       defaultPasswordHash,
+            "hk.lim":        defaultPasswordHash,
+            "asri.syafiq":   defaultPasswordHash,
+            "nur.syafiqa":   defaultPasswordHash,
+            "admin":         defaultPasswordHash
         };
 
         let currentLoggedInUser = "";
@@ -340,23 +337,31 @@
             const pass = document.getElementById('passwordInput').value;
             const errBox = document.getElementById('loginError');
 
-            // If user doesn't exist in dict, pre-compute hash for default password on the fly
             if (!authorizedUsers[user]) {
-                const defaultHash = await sha256("Xox@2026!@");
-                authorizedUsers[user] = defaultHash;
-                localStorage.setItem('xox_users', JSON.stringify(authorizedUsers));
+                errBox.classList.remove('hidden');
+                return;
             }
 
             const hashedInputPass = await sha256(pass);
-            if (authorizedUsers[user] && hashedInputPass === authorizedUsers[user]) {
+            if (hashedInputPass === authorizedUsers[user]) {
                 currentLoggedInUser = user;
                 document.getElementById('authModal').classList.add('hidden');
                 const mainDash = document.getElementById('mainDashboard');
                 mainDash.classList.remove('filter', 'blur-sm', 'pointer-events-none');
                 document.getElementById('loggedInUserDisplay').innerText = user;
+                errBox.classList.add('hidden');
             } else {
                 errBox.classList.remove('hidden');
             }
+        }
+
+        // Logout Handler
+        function handleLogout() {
+            currentLoggedInUser = "";
+            document.getElementById('mainDashboard').classList.add('filter', 'blur-sm', 'pointer-events-none');
+            document.getElementById('authModal').classList.remove('hidden');
+            document.getElementById('passwordInput').value = "";
+            document.getElementById('usernameInput').value = "";
         }
 
         // Change Password Handler
@@ -374,7 +379,7 @@
             document.getElementById('newPasswordInput').value = '';
         }
 
-        // Add New User Handler
+        // Add New User Handler (Admin Only)
         async function handleAddNewUser(event) {
             event.preventDefault();
             const newUser = document.getElementById('newUsernameInput').value.trim().toLowerCase();
@@ -391,6 +396,13 @@
         }
 
         function openUserManagementModal() {
+            // Show Add User section ONLY if logged in as admin or syahrul.nizam
+            const adminContainer = document.getElementById('adminUserAddContainer');
+            if (currentLoggedInUser === 'admin' || currentLoggedInUser === 'syahrul.nizam') {
+                adminContainer.classList.remove('hidden');
+            } else {
+                adminContainer.classList.add('hidden');
+            }
             document.getElementById('userManagementModal').classList.remove('hidden');
         }
 
@@ -398,8 +410,8 @@
             document.getElementById('userManagementModal').classList.add('hidden');
         }
 
-        // Live Terminal Generator with Ext 2001 & 2002 Highlighting
-        const sampleCalls = [
+        // Live Terminal Stream with Filtering
+        const allCalls = [
             { ext: '2001', phone: '+60166237566', callId: '00000000-01dd-6cca-2903-e6af0000a021', template: 'greeting1_en' },
             { ext: '2002', phone: '+60127604686', callId: '00000000-01dd-6ccd-3b35-b5550000a06c', template: 'greeting1_bm' },
             { ext: '3000', phone: '+60103300404', callId: '00000000-01dd-6ccd-4f12-5c8d00042570', template: 'welcome_xox' },
@@ -407,43 +419,85 @@
             { ext: '2002', phone: '+6018411602', callId: '00000000-01dd-6ccd-37d4-b986000425d8', template: 'greeting1_bm' }
         ];
 
-        const terminalOutput = document.getElementById('terminalOutput');
+        let currentFilter = 'all';
+        let terminalEntries = [];
+
+        function setFilter(filterType) {
+            currentFilter = filterType;
+            ['all', '2001', '2002'].forEach(f => {
+                const btn = document.getElementById(`filterBtn-${f}`);
+                if (f === filterType) {
+                    btn.className = "px-3 py-1 rounded-lg bg-emerald-600 text-white font-medium transition-colors";
+                } else {
+                    btn.className = "px-3 py-1 rounded-lg text-gray-400 hover:text-white transition-colors";
+                }
+            });
+            renderTerminal();
+        }
 
         function appendLogLine() {
             const now = new Date();
             const timeStr = now.toISOString().replace('Z', '+08:00').split('.')[0];
-            const call = sampleCalls[Math.floor(Math.random() * sampleCalls.length)];
+            const call = allCalls[Math.floor(Math.random() * allCalls.length)];
             
-            const isTarget = call.ext === '2001' || call.ext === '2002';
-            const borderCol = isTarget ? 'border-emerald-500/50 bg-emerald-950/10' : 'border-bordercol bg-cardbg/20';
-            const textHighlight = isTarget ? 'text-emerald-400 font-bold' : 'text-gray-300';
+            terminalEntries.push({ time: timeStr, ...call });
+            if (terminalEntries.length > 40) terminalEntries.shift();
+            renderTerminal();
+        }
 
-            const block = document.createElement('div');
-            block.className = `p-3 rounded-xl border ${borderCol} transition-all`;
-            block.innerHTML = `
-                <div class="text-gray-500">[${timeStr}] whatsapp_sending {</div>
-                <div class="pl-4 space-y-0.5">
-                    <div>callId: <span class="text-cyan-400">'${call.callId}'</span>,</div>
-                    <div>phone: <span class="text-amber-400">'${call.phone}'</span>,</div>
-                    <div>extension: <span class="${textHighlight}">'${call.ext}'</span>,</div>
-                    <div>template: <span class="text-purple-400">'${call.template}'</span></div>
-                </div>
-                <div class="text-gray-500">}</div>
-            `;
-            
-            terminalOutput.appendChild(block);
-            if (terminalOutput.children.length > 50) {
-                terminalOutput.removeChild(terminalOutput.firstChild);
+        function renderTerminal() {
+            const terminalOutput = document.getElementById('terminalOutput');
+            const filtered = terminalEntries.filter(entry => {
+                if (currentFilter === 'all') return true;
+                return entry.ext === currentFilter;
+            });
+
+            if (filtered.length === 0) {
+                terminalOutput.innerHTML = `<div class="text-gray-500 italic"># No logs matching filter Ext ${currentFilter}...</div>`;
+                return;
             }
+
+            terminalOutput.innerHTML = filtered.map(call => {
+                const isTarget = call.ext === '2001' || call.ext === '2002';
+                const borderCol = isTarget ? 'border-emerald-500/50 bg-emerald-950/10' : 'border-bordercol bg-cardbg/20';
+                const textHighlight = isTarget ? 'text-emerald-400 font-bold' : 'text-gray-300';
+
+                return `
+                    <div class="p-3 rounded-xl border ${borderCol} transition-all">
+                        <div class="text-gray-500">[${call.time}] whatsapp_sending {</div>
+                        <div class="pl-4 space-y-0.5">
+                            <div>callId: <span class="text-cyan-400">'${call.callId}'</span>,</div>
+                            <div>phone: <span class="text-amber-400">'${call.phone}'</span>,</div>
+                            <div>extension: <span class="${textHighlight}">'${call.ext}'</span>,</div>
+                            <div>template: <span class="text-purple-400">'${call.template}'</span></div>
+                        </div>
+                        <div class="text-gray-500">}</div>
+                    </div>
+                `;
+            }).join('');
             terminalOutput.scrollTop = terminalOutput.scrollHeight;
         }
 
         setInterval(appendLogLine, 2200);
         for(let i=0; i<3; i++) appendLogLine();
 
-        function clearTerminal() {
-            terminalOutput.innerHTML = '<div class="text-gray-500 italic"># Terminal cleared...</div>';
+        // Node.js Laptop Status Monitor
+        function checkNodeStatus() {
+            const badge = document.getElementById('nodeStatusBadge');
+            const dot = document.getElementById('nodeStatusDot');
+            const text = document.getElementById('nodeStatusText');
+
+            if (navigator.onLine) {
+                badge.className = "px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5";
+                dot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse";
+                text.innerText = "ONLINE";
+            } else {
+                badge.className = "px-2.5 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5";
+                dot.className = "w-1.5 h-1.5 rounded-full bg-rose-400";
+                text.innerText = "OFFLINE / NO NETWORK";
+            }
         }
+        setInterval(checkNodeStatus, 4000);
 
         // PowerShell Test-NetConnection simulator
         function runTestNetConnection() {
