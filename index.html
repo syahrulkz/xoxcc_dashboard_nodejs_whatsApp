@@ -458,89 +458,92 @@
             document.getElementById('userManagementModal').classList.add('hidden');
         }
 
-        // Expanded mock DB to heavily include non-target routing (3000, 1020, 8025, 1034) to match screenshot 23
+        // Exact match database from Node.js console screenshots (historical records)
         const nodeConsoleCalls = [
             {
-                ext: '2001',
-                phone: '+601113095805',
-                callId: '00000000-01dd-6cf8-b89d-32a20000a4b4',
-                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3031 -> Ext.3022 -> Ext.2001',
-                template: 'greeting1_en'
-            },
-            {
+                time: '2026-11-05T17:40:23+08:00',
                 ext: '2002',
                 phone: '+601157574095',
                 callId: '00000000-01dd-6cfe-443b-b8560004483c',
                 route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3056 -> Ext.2002',
-                template: 'greeting1_bm'
+                template: 'greeting1_bm',
+                isTarget: true
             },
             {
+                time: '2026-11-05T17:40:34+08:00',
+                ext: '2002',
+                phone: '+601157574095',
+                callId: '00000000-01dd-6cfe-443b-b8560004483c',
+                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3056 -> Ext.2002',
+                template: 'greeting1_bm',
+                isTarget: true
+            },
+            {
+                time: '2026-11-05T17:41:09+08:00',
+                ext: '2002',
+                phone: '+601157574095',
+                callId: '00000000-01dd-6cfe-443b-b8560004483c',
+                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3056 -> Ext.2002',
+                template: 'greeting1_bm',
+                isTarget: true
+            },
+            {
+                time: '2026-11-05T17:41:19+08:00',
+                ext: '2001',
+                phone: '+601113095805',
+                callId: '00000000-01dd-6cf8-b89d-32a20000a4b4',
+                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8034 -> Ext.3063 -> Ext.2001',
+                template: 'greeting1_en',
+                isTarget: true
+            },
+            {
+                time: '2026-11-05T17:00:24+08:00',
                 ext: '1020',
                 phone: '+601159779890',
                 callId: '00000000-01dd-6d04-1886-befa00004c6b',
                 route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8033 -> Ext.3058 -> Ext.8087 -> Ext.8269 -> Ext.1020',
-                template: null
+                template: null,
+                isTarget: false
             },
             {
+                time: '2026-11-05T17:03:24+08:00',
                 ext: '8025',
                 phone: '+60122953186',
                 callId: '00000000-01dd-6d04-0359-a3540000a61d',
                 route: 'Ext.3000 -> Ext.3001 -> Ext.8050 -> Ext.8006 -> Ext.8010 -> Ext.3055 -> Ext.8068 -> Ext.8215 -> Ext.8025',
-                template: null
+                template: null,
+                isTarget: false
             },
             {
+                time: '2026-11-05T17:00:40+08:00',
                 ext: '1021',
                 phone: '+60122650155',
                 callId: '00000000-01dd-6d04-f8a5-cf4400044d63',
                 route: 'Ext.1021 -> 0122650155',
-                template: null
+                template: null,
+                isTarget: false
             },
             {
+                time: '2026-11-05T16:20:55+08:00',
                 ext: '3000',
                 phone: '+601120572855',
                 callId: '00000000-01dd-6cfe-9459-327e00044889',
                 route: 'Ext.3000',
-                template: null
+                template: null,
+                isTarget: false
             },
             {
+                time: '2026-11-05T16:56:52+08:00',
                 ext: '1034',
                 phone: '+60132548099',
-                callId: '00000000-01dd-6d03-99cc-5c7000044bf2',
+                callId: '00000000-01dd-6d03-99cc-5c700004bf2',
                 route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8034 -> Ext.3061 -> Ext.8093 -> Ext.8293 -> Ext.1034',
-                template: null
+                template: null,
+                isTarget: false
             }
         ];
 
         let currentFilter = 'all';
-        let terminalEntries = [];
-
-        function getMalaysiaTimeString(dateObj) {
-            const formatter = new Intl.DateTimeFormat('en-CA', {
-                timeZone: 'Asia/Kuala_Lumpur',
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
-            });
-            const parts = formatter.formatToParts(dateObj);
-            const p = {};
-            parts.forEach(item => p[item.type] = item.value);
-            return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}+08:00`;
-        }
-
-        function initInitialLogs() {
-            let currentTime = new Date();
-            for (let i = 0; i < 5; i++) {
-                const timeStr = getMalaysiaTimeString(currentTime);
-                const call = nodeConsoleCalls[Math.floor(Math.random() * nodeConsoleCalls.length)];
-                terminalEntries.unshift({ time: timeStr, ...call });
-                currentTime = new Date(currentTime.getTime() - 6000);
-            }
-        }
-        initInitialLogs();
 
         function setFilter(filterType) {
             currentFilter = filterType;
@@ -557,21 +560,14 @@
             renderTerminal();
         }
 
-        function appendLogLine() {
-            const now = new Date();
-            const timeStr = getMalaysiaTimeString(now);
-            const call = nodeConsoleCalls[Math.floor(Math.random() * nodeConsoleCalls.length)];
-            
-            terminalEntries.push({ time: timeStr, ...call });
-            if (terminalEntries.length > 50) terminalEntries.shift();
-            renderTerminal();
-        }
-
         function renderTerminal() {
             const terminalOutput = document.getElementById('terminalOutput');
             
+            // Sort by time so they appear logically
+            let sortedCalls = [...nodeConsoleCalls].sort((a, b) => new Date(a.time) - new Date(b.time));
+            
             // Only output entries that match the selected filter requirements
-            const filtered = terminalEntries.filter(entry => {
+            const filtered = sortedCalls.filter(entry => {
                 if (currentFilter === 'all') return true;
                 if (currentFilter === '2001') return entry.ext === '2001';
                 if (currentFilter === '2002') return entry.ext === '2002';
@@ -599,8 +595,7 @@
                     `;
 
                     // If it hit 2001 or 2002, append the whatsapp sending green block below the CDR
-                    const isWhatsAppTarget = call.ext === '2001' || call.ext === '2002';
-                    const greenWhatsAppBlock = isWhatsAppTarget ? `
+                    const greenWhatsAppBlock = call.isTarget ? `
                         <div class="mt-4 border-l-2 border-emerald-500 pl-4 py-1">
                             <div class="text-emerald-400 font-bold">[${call.time}] whatsapp_sending {</div>
                             <div class="pl-4 space-y-0.5 text-emerald-300">
@@ -621,7 +616,7 @@
                     `;
                 } 
                 
-                // For 2001, 2002, and 2001&2002 tabs: ONLY show the isolated green whatsapp blocks matching screenshot image_9a95cb.png
+                // For 2001, 2002, and 2001&2002 tabs: ONLY show the isolated green whatsapp blocks matching your screenshot
                 else {
                     return `
                         <div class="p-3 mb-3 rounded-xl border border-emerald-500/50 bg-emerald-950/10 transition-all">
@@ -641,7 +636,6 @@
             terminalOutput.scrollTop = terminalOutput.scrollHeight;
         }
 
-        setInterval(appendLogLine, 3500);
         renderTerminal();
 
         function checkNodeStatus() {
