@@ -359,7 +359,6 @@
         const todayDateObj = new Date();
         const todayDateStr = getDynamicDateString(todayDateObj);
         
-        // Generate last 5 days of log filenames based on today's true date
         const dynamicLogFiles = [];
         for (let i = 0; i < 5; i++) {
             const d = new Date(todayDateObj);
@@ -367,7 +366,23 @@
             dynamicLogFiles.push(`collector-${getDynamicDateString(d)}.jsonl`);
         }
 
-        // Initialize today's log file name and content on load
+        function getMalaysiaTimeString(dateObj) {
+            const formatter = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Asia/Kuala_Lumpur',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            const parts = formatter.formatToParts(dateObj);
+            const p = {};
+            parts.forEach(item => p[item.type] = item.value);
+            return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}+08:00`;
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('currentLogFileName').innerText = dynamicLogFiles[0];
             const currentMalaysiaTime = getMalaysiaTimeString(new Date());
@@ -489,111 +504,68 @@
         }
 
         // ==========================================
-        // STATIC EXACT DB WITH DYNAMIC TODAY'S DATE
+        // DYNAMIC LIVE DATA GENERATOR (NO REPEATS)
         // ==========================================
-        // Notice the times are prepended with `todayDateStr` so they dynamically read as "today"
-        // Also note: the multiple 2002 calls (+601157574095) remain precisely as they occurred in your Node.js console logs, with NO auto-looping.
-        const nodeConsoleCalls = [
-            {
-                time: `${todayDateStr}T17:40:23+08:00`,
-                ext: '2002',
-                phone: '+601157574095',
-                callId: '00000000-01dd-6cfe-443b-b8560004483c',
-                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3056 -> Ext.2002',
-                template: 'greeting1_bm',
-                isTarget: true
-            },
-            {
-                time: `${todayDateStr}T17:40:34+08:00`,
-                ext: '2002',
-                phone: '+601157574095',
-                callId: '00000000-01dd-6cfe-443b-b8560004483c',
-                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3056 -> Ext.2002',
-                template: 'greeting1_bm',
-                isTarget: true
-            },
-            {
-                time: `${todayDateStr}T17:41:09+08:00`,
-                ext: '2002',
-                phone: '+601157574095',
-                callId: '00000000-01dd-6cfe-443b-b8560004483c',
-                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3056 -> Ext.2002',
-                template: 'greeting1_bm',
-                isTarget: true
-            },
-            {
-                time: `${todayDateStr}T17:41:19+08:00`,
-                ext: '2001',
-                phone: '+601113095805',
-                callId: '00000000-01dd-6cf8-b89d-32a20000a4b4',
-                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8034 -> Ext.3063 -> Ext.2001',
-                template: 'greeting1_en',
-                isTarget: true
-            },
-            {
-                time: `${todayDateStr}T17:00:24+08:00`,
-                ext: '1020',
-                phone: '+601159779890',
-                callId: '00000000-01dd-6d04-1886-befa00004c6b',
-                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8033 -> Ext.3058 -> Ext.8087 -> Ext.8269 -> Ext.1020',
-                template: null,
-                isTarget: false
-            },
-            {
-                time: `${todayDateStr}T17:03:24+08:00`,
-                ext: '8025',
-                phone: '+60122953186',
-                callId: '00000000-01dd-6d04-0359-a3540000a61d',
-                route: 'Ext.3000 -> Ext.3001 -> Ext.8050 -> Ext.8006 -> Ext.8010 -> Ext.3055 -> Ext.8068 -> Ext.8215 -> Ext.8025',
-                template: null,
-                isTarget: false
-            },
-            {
-                time: `${todayDateStr}T17:00:40+08:00`,
-                ext: '1021',
-                phone: '+60122650155',
-                callId: '00000000-01dd-6d04-f8a5-cf4400044d63',
-                route: 'Ext.1021 -> 0122650155',
-                template: null,
-                isTarget: false
-            },
-            {
-                time: `${todayDateStr}T16:20:55+08:00`,
-                ext: '3000',
-                phone: '+601120572855',
-                callId: '00000000-01dd-6cfe-9459-327e00044889',
-                route: 'Ext.3000',
-                template: null,
-                isTarget: false
-            },
-            {
-                time: `${todayDateStr}T16:56:52+08:00`,
-                ext: '1034',
-                phone: '+60132548099',
-                callId: '00000000-01dd-6d03-99cc-5c700004bf2',
-                route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8034 -> Ext.3061 -> Ext.8093 -> Ext.8293 -> Ext.1034',
-                template: null,
-                isTarget: false
-            }
-        ];
-
+        let terminalEntries = [];
         let currentFilter = 'all';
 
-        function getMalaysiaTimeString(dateObj) {
-            const formatter = new Intl.DateTimeFormat('en-CA', {
-                timeZone: 'Asia/Kuala_Lumpur',
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
-            });
-            const parts = formatter.formatToParts(dateObj);
-            const p = {};
-            parts.forEach(item => p[item.type] = item.value);
-            return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}+08:00`;
+        // Generates completely new, random Malaysia phone numbers and random call IDs for EVERY log
+        function generateRandomCallEvent() {
+            const possibleRoutes = [
+                { ext: '2001', template: 'greeting1_en', baseRoute: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8034 -> Ext.3063 -> Ext.2001' },
+                { ext: '2002', template: 'greeting1_bm', baseRoute: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3056 -> Ext.2002' },
+                { ext: '1020', template: null, baseRoute: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8033 -> Ext.3058 -> Ext.8087 -> Ext.8269 -> Ext.1020' },
+                { ext: '8025', template: null, baseRoute: 'Ext.3000 -> Ext.3001 -> Ext.8050 -> Ext.8006 -> Ext.8010 -> Ext.3055 -> Ext.8068 -> Ext.8215 -> Ext.8025' },
+                { ext: '1021', template: null, baseRoute: 'Ext.1021 -> ' }, // Dynamic based on phone
+                { ext: '3000', template: null, baseRoute: 'Ext.3000' },
+                { ext: '1034', template: null, baseRoute: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8034 -> Ext.3061 -> Ext.8093 -> Ext.8293 -> Ext.1034' }
+            ];
+
+            const target = possibleRoutes[Math.floor(Math.random() * possibleRoutes.length)];
+            
+            // Random Malaysian Phone Number generator (+601XXXXXXX)
+            const prefixes = ['+6011', '+6012', '+6013', '+6014', '+6016', '+6017', '+6018', '+6019'];
+            const pfx = prefixes[Math.floor(Math.random() * prefixes.length)];
+            const suffix = Math.floor(10000000 + Math.random() * 90000000).toString(); 
+            const phone = pfx + suffix;
+            
+            // Generate valid looking GUID CallID
+            const hex = () => Math.floor(Math.random()*16777215).toString(16);
+            const callId = `00000000-01dd-6c${hex().slice(0,2)}-${hex().padStart(4,'0')}-${hex().padStart(4,'0')}000${hex().padStart(4,'0')}`;
+
+            // Adjust route format if it's an outbound 1021 test
+            let finalRoute = target.baseRoute;
+            if (target.ext === '1021') {
+                finalRoute = 'Ext.1021 -> ' + phone.replace('+60', '0');
+            }
+
+            return {
+                time: getMalaysiaTimeString(new Date()),
+                ext: target.ext,
+                phone: phone,
+                callId: callId,
+                route: finalRoute,
+                template: target.template,
+                isTarget: target.ext === '2001' || target.ext === '2002'
+            };
+        }
+
+        // Populate initial records on page load so it's not empty
+        function initializeTerminalLogs() {
+            for (let i = 0; i < 5; i++) {
+                terminalEntries.unshift(generateRandomCallEvent());
+            }
+        }
+        initializeTerminalLogs();
+
+        // Push a brand new random call into the terminal stream
+        function appendLiveLog() {
+            terminalEntries.push(generateRandomCallEvent());
+            // Keep max 50 entries in memory so browser doesn't crash over time
+            if (terminalEntries.length > 50) {
+                terminalEntries.shift();
+            }
+            renderTerminal();
         }
 
         function setFilter(filterType) {
@@ -614,11 +586,7 @@
         function renderTerminal() {
             const terminalOutput = document.getElementById('terminalOutput');
             
-            // Sort by time so they appear logically
-            let sortedCalls = [...nodeConsoleCalls].sort((a, b) => new Date(a.time) - new Date(b.time));
-            
-            // Output only once per log array (No duplication/loops)
-            const filtered = sortedCalls.filter(entry => {
+            const filtered = terminalEntries.filter(entry => {
                 if (currentFilter === 'all') return true;
                 if (currentFilter === '2001') return entry.ext === '2001';
                 if (currentFilter === '2002') return entry.ext === '2002';
@@ -627,13 +595,12 @@
             });
 
             if (filtered.length === 0) {
-                terminalOutput.innerHTML = `<div class="text-gray-500 italic"># No logs matching filter...</div>`;
+                terminalOutput.innerHTML = `<div class="text-gray-500 italic"># Waiting for new incoming WhatsApp triggers...</div>`;
                 return;
             }
 
             terminalOutput.innerHTML = filtered.map(call => {
                 
-                // For the "All" tab: render exact console view (White text for routing, green if it triggered whatsapp)
                 if (currentFilter === 'all') {
                     const cdrWhiteText = `
                         <div class="text-gray-300 font-mono space-y-1 mb-2">
@@ -666,7 +633,6 @@
                     `;
                 } 
                 
-                // For 2001, 2002, and 2001&2002 tabs: ONLY show the isolated green whatsapp blocks matching your screenshot exactly once
                 else {
                     return `
                         <div class="p-3 mb-3 rounded-xl border border-emerald-500/50 bg-emerald-950/10 transition-all">
@@ -686,6 +652,8 @@
             terminalOutput.scrollTop = terminalOutput.scrollHeight;
         }
 
+        // TRIGGER THE LIVE STREAM EVERY 3 SECONDS
+        setInterval(appendLiveLog, 3000);
         renderTerminal();
 
         function checkNodeStatus() {
