@@ -166,7 +166,7 @@
                     <div class="bg-cardbg/50 px-5 py-3 border-b border-bordercol flex items-center justify-between">
                         <div class="flex items-center gap-2 text-sm font-semibold text-white">
                             <i class="fa-solid fa-file-code text-amber-400"></i>
-                            <span id="currentLogFileName">collector-2026-11-05.jsonl</span>
+                            <span id="currentLogFileName">collector-today.jsonl</span>
                         </div>
                         <button onclick="openLogBrowserModal()" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 px-3 py-1 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5">
                             <i class="fa-solid fa-folder-open"></i> Browse Logs...
@@ -175,14 +175,7 @@
 
                     <!-- LOG CONTENT WINDOW -->
                     <div class="bg-[#05070b] p-4 font-mono text-[11px] text-gray-300 overflow-y-auto custom-scrollbar" style="max-height: 240px;" id="logViewerContent">
-                        {
-  "receivedAt": "2026-11-05T17:15:14+08:00",
-  "event": "whatsapp_sending",
-  "callId": "00000000-01dd-6cfb-7b86-97880000a514",
-  "phone": "+60139844304",
-  "extension": "2002",
-  "template": "greeting1_bm"
-}
+                        <!-- Dynamic Content Based on Date -->
                     </div>
 
                     <div class="bg-cardbg/30 border-t border-bordercol px-4 py-2 flex items-center justify-between text-[11px] text-gray-400">
@@ -353,6 +346,39 @@
 
         let currentLoggedInUser = "";
 
+        // DYNAMIC LOG DATE GENERATION
+        function getDynamicDateString(dateObj) {
+            const yyyy = dateObj.getFullYear();
+            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const dd = String(dateObj.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        const todayDateObj = new Date();
+        const todayDateStr = getDynamicDateString(todayDateObj);
+        
+        // Generate last 5 days of log filenames based on today
+        const dynamicLogFiles = [];
+        for (let i = 0; i < 5; i++) {
+            const d = new Date(todayDateObj);
+            d.setDate(d.getDate() - i);
+            dynamicLogFiles.push(`collector-${getDynamicDateString(d)}.jsonl`);
+        }
+
+        // Initialize today's log file name and content on load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('currentLogFileName').innerText = dynamicLogFiles[0];
+            const currentMalaysiaTime = getMalaysiaTimeString(new Date());
+            document.getElementById('logViewerContent').innerHTML = `
+{
+  "receivedAt": "${currentMalaysiaTime}",
+  "event": "file_loaded",
+  "file": "${dynamicLogFiles[0]}",
+  "status": "waiting_for_payload"
+}`;
+        });
+
+
         function handleLogin(event) {
             event.preventDefault();
             const rawUser = document.getElementById('usernameInput').value;
@@ -458,7 +484,7 @@
             document.getElementById('userManagementModal').classList.add('hidden');
         }
 
-        // Exact match database from Node.js console screenshots (historical records)
+        // STATIC EXACT DB (No Repeating Loop) based on screenshots provided
         const nodeConsoleCalls = [
             {
                 time: '2026-11-05T17:40:23+08:00',
@@ -545,6 +571,23 @@
 
         let currentFilter = 'all';
 
+        function getMalaysiaTimeString(dateObj) {
+            const formatter = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Asia/Kuala_Lumpur',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            const parts = formatter.formatToParts(dateObj);
+            const p = {};
+            parts.forEach(item => p[item.type] = item.value);
+            return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}+08:00`;
+        }
+
         function setFilter(filterType) {
             currentFilter = filterType;
             ['all', '2001', '2002', '2001_2002'].forEach(f => {
@@ -566,7 +609,7 @@
             // Sort by time so they appear logically
             let sortedCalls = [...nodeConsoleCalls].sort((a, b) => new Date(a.time) - new Date(b.time));
             
-            // Only output entries that match the selected filter requirements
+            // Output only once per log array (No duplication/loops)
             const filtered = sortedCalls.filter(entry => {
                 if (currentFilter === 'all') return true;
                 if (currentFilter === '2001') return entry.ext === '2001';
@@ -576,7 +619,7 @@
             });
 
             if (filtered.length === 0) {
-                terminalOutput.innerHTML = `<div class="text-gray-500 italic"># No WhatsApp trigger logs matching filter...</div>`;
+                terminalOutput.innerHTML = `<div class="text-gray-500 italic"># No logs matching filter...</div>`;
                 return;
             }
 
@@ -590,11 +633,10 @@
                             <div>Call ${call.callId},${call.phone},...</div>
                             <div>Direction: inbound | External number: ${call.phone}</div>
                             <div>Route: ${call.route}</div>
-                            <div>Saved to: C:\\Users\\cctraining\\Desktop\\xox-cdr-test\\data\\cdr-2026-11-05.jsonl</div>
+                            <div>Saved to: C:\\Users\\cctraining\\Desktop\\xox-cdr-test\\data\\${todayDateStr}.jsonl</div>
                         </div>
                     `;
 
-                    // If it hit 2001 or 2002, append the whatsapp sending green block below the CDR
                     const greenWhatsAppBlock = call.isTarget ? `
                         <div class="mt-4 border-l-2 border-emerald-500 pl-4 py-1">
                             <div class="text-emerald-400 font-bold">[${call.time}] whatsapp_sending {</div>
@@ -616,7 +658,7 @@
                     `;
                 } 
                 
-                // For 2001, 2002, and 2001&2002 tabs: ONLY show the isolated green whatsapp blocks matching your screenshot
+                // For 2001, 2002, and 2001&2002 tabs: ONLY show the isolated green whatsapp blocks matching your screenshot exactly once
                 else {
                     return `
                         <div class="p-3 mb-3 rounded-xl border border-emerald-500/50 bg-emerald-950/10 transition-all">
@@ -681,14 +723,9 @@
             document.getElementById('metricDisk').innerText = (1 + Math.random() * 0.5).toFixed(0) + '%';
         }, 3000);
 
-        const logFiles = [
-            "collector-2026-11-05.jsonl",
-            "collector-2026-11-04.jsonl"
-        ];
-
         function openLogBrowserModal() {
             const listEl = document.getElementById('logFileList');
-            listEl.innerHTML = logFiles.map(file => `
+            listEl.innerHTML = dynamicLogFiles.map(file => `
                 <div onclick="selectLogFile('${file}')" class="p-3 bg-darkbg hover:bg-cardbg border border-bordercol rounded-xl cursor-pointer flex items-center justify-between transition-colors">
                     <span class="font-mono text-xs text-gray-200 flex items-center gap-2">
                         <i class="fa-solid fa-file-lines text-amber-400"></i> ${file}
@@ -705,10 +742,15 @@
 
         function selectLogFile(filename) {
             document.getElementById('currentLogFileName').innerText = filename;
+            const currentMalaysiaTime = getMalaysiaTimeString(new Date());
+            
             document.getElementById('logViewerContent').innerHTML = `
-                { "receivedAt": "2026-11-05T17:15:14+08:00", "event": "file_loaded", "file": "${filename}", "status": "active" }
-                { "receivedAt": "2026-11-05T17:15:14+08:00", "event": "whatsapp_sending", "phone": "+60139844304", "extension": "2002", "status": "sent" }
-            `;
+{
+  "receivedAt": "${currentMalaysiaTime}",
+  "event": "file_loaded",
+  "file": "${filename}",
+  "status": "waiting_for_payload"
+}`;
             closeLogBrowserModal();
         }
 
@@ -717,9 +759,6 @@
             alert('JSON log content copied to clipboard!');
         }
 
-        function openSettings() {
-            alert('Control Center Settings: User Session Active as ' + document.getElementById('loggedInUserDisplay').innerText);
-        }
     </script>
 </body>
 </html>
