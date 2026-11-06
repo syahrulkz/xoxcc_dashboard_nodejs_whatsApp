@@ -61,10 +61,6 @@
                     <i class="fa-solid fa-right-to-bracket"></i> Authenticate Session
                 </button>
             </form>
-
-            <div class="mt-4 text-center">
-                <span class="text-xs text-gray-400">Forgot Password? <strong class="text-gray-300">Please contact admin for access</strong></span>
-            </div>
         </div>
     </div>
 
@@ -81,7 +77,7 @@
                         <h1 class="font-bold text-base text-white tracking-wide">XOX CDR & Operations Control Center</h1>
                         <span id="nodeStatusBadge" class="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5">
                             <span id="nodeStatusDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 
-                            <span id="nodeStatusText">ONLINE</span>
+                            <span id="nodeStatusText">ONLINE (103.191.74.17:3000)</span>
                         </span>
                     </div>
                     <p class="text-xs text-gray-400">Node.js Server: 103.191.74.17:3000 • Asia/Kuala_Lumpur (GMT+8)</p>
@@ -93,7 +89,7 @@
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-microchip text-emerald-400"></i>
                     <span class="text-gray-400">CPU:</span>
-                    <span id="metricCpu" class="font-mono font-medium text-white">10%</span>
+                    <span id="metricCpu" class="font-mono font-medium text-white">12%</span>
                 </div>
                 <div class="h-3 w-px bg-bordercol"></div>
                 <div class="flex items-center gap-2">
@@ -134,8 +130,14 @@
                         <i class="fa-solid fa-square-rss text-emerald-400 animate-pulse"></i>
                         <span>Live Terminal Stream — node app.js (103.191.74.17:3000)</span>
                     </div>
-                    <!-- STREAM FILTERS -->
+                    <!-- STREAM FILTERS & CONTROLS -->
                     <div class="flex items-center gap-1 bg-darkbg p-1 rounded-xl border border-bordercol text-xs">
+                        <!-- PAUSE BUTTON -->
+                        <button onclick="togglePause()" id="pauseBtn" class="px-2.5 py-1 rounded-lg text-gray-400 hover:text-white transition-colors" title="Pause Stream">
+                            <i class="fa-solid fa-pause"></i>
+                        </button>
+                        <div class="w-px h-4 bg-bordercol mx-0.5"></div>
+                        <!-- FILTER BUTTONS -->
                         <button onclick="setFilter('all')" id="filterBtn-all" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-medium transition-colors">All</button>
                         <button onclick="setFilter('2001')" id="filterBtn-2001" class="px-2.5 py-1 rounded-lg text-gray-400 hover:text-white transition-colors">2001</button>
                         <button onclick="setFilter('2002')" id="filterBtn-2002" class="px-2.5 py-1 rounded-lg text-gray-400 hover:text-white transition-colors">2002</button>
@@ -150,9 +152,9 @@
 
                 <!-- TERMINAL FOOTER STATUS -->
                 <div class="bg-cardbg/30 border-t border-bordercol px-4 py-2.5 flex items-center justify-between text-xs text-gray-400">
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                        <span>Connected to 103.191.74.17:3000 (Node.js Stream)</span>
+                    <div class="flex items-center gap-2" id="footerConnectionStatus">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping" id="footerPing"></span>
+                        <span id="footerText">Connected to 103.191.74.17:3000 (Node.js Stream)</span>
                     </div>
                     <span class="text-emerald-400 font-semibold font-mono">TZ: Asia/Kuala_Lumpur</span>
                 </div>
@@ -252,7 +254,7 @@
             </div>
             
             <div class="space-y-6">
-                <!-- Change Password Form (Visible to All Users) -->
+                <!-- Change Password Form -->
                 <div class="bg-cardbg/50 border border-bordercol p-4 rounded-xl">
                     <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3"><i class="fa-solid fa-key text-amber-400 mr-1.5"></i> Change My Password</h4>
                     <form onsubmit="handleChangePassword(event)" class="space-y-3">
@@ -268,9 +270,8 @@
                     </form>
                 </div>
 
-                <!-- Super Admin Section (Boxes 2 & 3: ONLY Visible to syahrul.nizam) -->
+                <!-- Super Admin Section -->
                 <div id="superAdminContainer" class="space-y-4 hidden">
-                    <!-- Add New User Form -->
                     <div class="bg-cardbg/50 border border-bordercol p-4 rounded-xl">
                         <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3"><i class="fa-solid fa-user-plus text-cyan-400 mr-1.5"></i> Add New User (Super Admin)</h4>
                         <form onsubmit="handleAddNewUser(event)" class="space-y-3">
@@ -293,7 +294,6 @@
                         </form>
                     </div>
 
-                    <!-- Reset Any User Password Form -->
                     <div class="bg-cardbg/50 border border-bordercol p-4 rounded-xl">
                         <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3"><i class="fa-solid fa-user-gear text-emerald-400 mr-1.5"></i> Reset User Password (Super Admin)</h4>
                         <form onsubmit="handleResetUserPassword(event)" class="space-y-3">
@@ -347,7 +347,7 @@
         let currentLoggedInUser = "";
 
         // ==========================================
-        // DYNAMIC LOG DATE GENERATION
+        // DATE UTILITIES
         // ==========================================
         function getDynamicDateString(dateObj) {
             const yyyy = dateObj.getFullYear();
@@ -504,67 +504,99 @@
         }
 
         // ==========================================
-        // DYNAMIC LIVE DATA GENERATOR (NO REPEATS)
+        // RANDOM LIVE STREAM GENERATOR
         // ==========================================
         let terminalEntries = [];
         let currentFilter = 'all';
+        let isStreamPaused = false; // Pause state variable
 
-        // Generates completely new, random Malaysia phone numbers and random call IDs for EVERY log
-        function generateRandomCallEvent() {
-            const possibleRoutes = [
-                { ext: '2001', template: 'greeting1_en', baseRoute: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8034 -> Ext.3063 -> Ext.2001' },
-                { ext: '2002', template: 'greeting1_bm', baseRoute: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3056 -> Ext.2002' },
-                { ext: '1020', template: null, baseRoute: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8033 -> Ext.3058 -> Ext.8087 -> Ext.8269 -> Ext.1020' },
-                { ext: '8025', template: null, baseRoute: 'Ext.3000 -> Ext.3001 -> Ext.8050 -> Ext.8006 -> Ext.8010 -> Ext.3055 -> Ext.8068 -> Ext.8215 -> Ext.8025' },
-                { ext: '1021', template: null, baseRoute: 'Ext.1021 -> ' }, // Dynamic based on phone
-                { ext: '3000', template: null, baseRoute: 'Ext.3000' },
-                { ext: '1034', template: null, baseRoute: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8034 -> Ext.3061 -> Ext.8093 -> Ext.8293 -> Ext.1034' }
-            ];
+        const rawRoutes = [
+            { finalExt: '6010', route: '0125636433 -> Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8033 -> Ext.6010' },
+            { finalExt: '6012', route: '0135335859 -> Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8033 -> Ext.6012' },
+            { finalExt: '1028', route: 'Ext.1028 -> 0108215309' },
+            { finalExt: '3000', route: '01120572855 -> Ext.3000' },
+            { finalExt: '1034', route: '0128179669 -> Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3056 -> Ext.8087 -> Ext.8269 -> Ext.1034' },
+            { finalExt: '2001', route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8034 -> Ext.3063 -> Ext.2001' },
+            { finalExt: '2002', route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3056 -> Ext.2002' }
+        ];
 
-            const target = possibleRoutes[Math.floor(Math.random() * possibleRoutes.length)];
+        function generateRandomCall() {
+            const routeTemplate = rawRoutes[Math.floor(Math.random() * rawRoutes.length)];
             
-            // Random Malaysian Phone Number generator (+601XXXXXXX)
             const prefixes = ['+6011', '+6012', '+6013', '+6014', '+6016', '+6017', '+6018', '+6019'];
             const pfx = prefixes[Math.floor(Math.random() * prefixes.length)];
             const suffix = Math.floor(10000000 + Math.random() * 90000000).toString(); 
-            const phone = pfx + suffix;
-            
-            // Generate valid looking GUID CallID
+            const phoneStr = pfx + suffix;
+            const plainPhoneStr = phoneStr.replace('+60', '0');
+
             const hex = () => Math.floor(Math.random()*16777215).toString(16);
             const callId = `00000000-01dd-6c${hex().slice(0,2)}-${hex().padStart(4,'0')}-${hex().padStart(4,'0')}000${hex().padStart(4,'0')}`;
 
-            // Adjust route format if it's an outbound 1021 test
-            let finalRoute = target.baseRoute;
-            if (target.ext === '1021') {
-                finalRoute = 'Ext.1021 -> ' + phone.replace('+60', '0');
+            let dynamicRoute = routeTemplate.route;
+            if (dynamicRoute.includes('0125636433')) dynamicRoute = dynamicRoute.replace('0125636433', plainPhoneStr);
+            if (dynamicRoute.includes('0135335859')) dynamicRoute = dynamicRoute.replace('0135335859', plainPhoneStr);
+            if (dynamicRoute.includes('0108215309')) dynamicRoute = dynamicRoute.replace('0108215309', plainPhoneStr);
+            if (dynamicRoute.includes('01120572855')) dynamicRoute = dynamicRoute.replace('01120572855', plainPhoneStr);
+            if (dynamicRoute.includes('0128179669')) dynamicRoute = dynamicRoute.replace('0128179669', plainPhoneStr);
+            if (dynamicRoute.includes('Ext.3000 -> Ext.3001') && !dynamicRoute.includes(plainPhoneStr)) {
+                dynamicRoute = `${plainPhoneStr} -> ${dynamicRoute}`;
             }
 
             return {
                 time: getMalaysiaTimeString(new Date()),
-                ext: target.ext,
-                phone: phone,
                 callId: callId,
-                route: finalRoute,
-                template: target.template,
-                isTarget: target.ext === '2001' || target.ext === '2002'
+                phone: phoneStr,
+                route: dynamicRoute,
+                finalExt: routeTemplate.finalExt,
+                isWhatsAppTarget: routeTemplate.finalExt === '2001' || routeTemplate.finalExt === '2002',
+                template: routeTemplate.finalExt === '2001' ? 'greeting1_en' : 'greeting1_bm'
             };
         }
 
-        // Populate initial records on page load so it's not empty
-        function initializeTerminalLogs() {
+        function seedInitialData() {
             for (let i = 0; i < 5; i++) {
-                terminalEntries.unshift(generateRandomCallEvent());
+                terminalEntries.unshift(generateRandomCall());
             }
         }
-        initializeTerminalLogs();
+        seedInitialData();
 
-        // Push a brand new random call into the terminal stream
-        function appendLiveLog() {
-            terminalEntries.push(generateRandomCallEvent());
-            // Keep max 50 entries in memory so browser doesn't crash over time
-            if (terminalEntries.length > 50) {
-                terminalEntries.shift();
+        // Pause Toggle Logic
+        function togglePause() {
+            isStreamPaused = !isStreamPaused;
+            const btn = document.getElementById('pauseBtn');
+            const footerPing = document.getElementById('footerPing');
+            const footerText = document.getElementById('footerText');
+            
+            if (isStreamPaused) {
+                // Change to Amber Play Button
+                btn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                btn.classList.add('text-amber-400');
+                btn.classList.remove('text-gray-400', 'hover:text-white');
+                btn.title = "Resume Stream";
+                
+                // Update Footer Status to Paused
+                footerPing.classList.remove('bg-emerald-500', 'animate-ping');
+                footerPing.classList.add('bg-amber-500');
+                footerText.innerText = "Node.js Stream Paused";
+            } else {
+                // Change back to Gray Pause Button
+                btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                btn.classList.remove('text-amber-400');
+                btn.classList.add('text-gray-400', 'hover:text-white');
+                btn.title = "Pause Stream";
+                
+                // Update Footer Status to Live
+                footerPing.classList.remove('bg-amber-500');
+                footerPing.classList.add('bg-emerald-500', 'animate-ping');
+                footerText.innerText = "Connected to 103.191.74.17:3000 (Node.js Stream)";
             }
+        }
+
+        function addLiveLog() {
+            if (isStreamPaused) return; // Halt generation if paused
+            
+            terminalEntries.push(generateRandomCall());
+            if (terminalEntries.length > 50) terminalEntries.shift();
             renderTerminal();
         }
 
@@ -588,14 +620,14 @@
             
             const filtered = terminalEntries.filter(entry => {
                 if (currentFilter === 'all') return true;
-                if (currentFilter === '2001') return entry.ext === '2001';
-                if (currentFilter === '2002') return entry.ext === '2002';
-                if (currentFilter === '2001_2002') return entry.ext === '2001' || entry.ext === '2002';
+                if (currentFilter === '2001') return entry.finalExt === '2001';
+                if (currentFilter === '2002') return entry.finalExt === '2002';
+                if (currentFilter === '2001_2002') return entry.finalExt === '2001' || entry.finalExt === '2002';
                 return true;
             });
 
             if (filtered.length === 0) {
-                terminalOutput.innerHTML = `<div class="text-gray-500 italic"># Waiting for new incoming WhatsApp triggers...</div>`;
+                terminalOutput.innerHTML = `<div class="text-gray-500 italic"># Waiting for matching calls...</div>`;
                 return;
             }
 
@@ -605,20 +637,20 @@
                     const cdrWhiteText = `
                         <div class="text-gray-300 font-mono space-y-1 mb-2">
                             <div>New CDR (Asia/Kuala_Lumpur):</div>
-                            <div>Call ${call.callId},${call.phone},...</div>
-                            <div>Direction: inbound | External number: ${call.phone}</div>
+                            <div>Call ${call.callId},${call.phone.replace('+60','0')},...</div>
+                            <div>Direction: ${call.finalExt === '1028' ? 'outbound' : 'inbound'} | External number: ${call.phone}</div>
                             <div>Route: ${call.route}</div>
                             <div>Saved to: C:\\Users\\cctraining\\Desktop\\xox-cdr-test\\data\\${todayDateStr}.jsonl</div>
                         </div>
                     `;
 
-                    const greenWhatsAppBlock = call.isTarget ? `
+                    const greenWhatsAppBlock = call.isWhatsAppTarget ? `
                         <div class="mt-4 border-l-2 border-emerald-500 pl-4 py-1">
                             <div class="text-emerald-400 font-bold">[${call.time}] whatsapp_sending {</div>
                             <div class="pl-4 space-y-0.5 text-emerald-300">
                                 <div>callId: <span class="text-cyan-400">'${call.callId}'</span>,</div>
                                 <div>phone: <span class="text-amber-400">'${call.phone}'</span>,</div>
-                                <div>extension: <span class="text-emerald-400 font-bold">'${call.ext}'</span>,</div>
+                                <div>extension: <span class="text-emerald-400 font-bold">'${call.finalExt}'</span>,</div>
                                 <div>template: <span class="text-purple-400">'${call.template}'</span></div>
                             </div>
                             <div class="text-emerald-400 font-bold">}</div>
@@ -640,7 +672,7 @@
                             <div class="pl-4 space-y-0.5 text-emerald-300">
                                 <div>callId: <span class="text-cyan-400">'${call.callId}'</span>,</div>
                                 <div>phone: <span class="text-amber-400">'${call.phone}'</span>,</div>
-                                <div>extension: <span class="text-emerald-400 font-bold">'${call.ext}'</span>,</div>
+                                <div>extension: <span class="text-emerald-400 font-bold">'${call.finalExt}'</span>,</div>
                                 <div>template: <span class="text-purple-400">'${call.template}'</span></div>
                             </div>
                             <div class="text-emerald-400 font-bold">}</div>
@@ -652,8 +684,8 @@
             terminalOutput.scrollTop = terminalOutput.scrollHeight;
         }
 
-        // TRIGGER THE LIVE STREAM EVERY 3 SECONDS
-        setInterval(appendLiveLog, 3000);
+        // GENERATE NEW LIVE CALL EVERY 3 SECONDS
+        setInterval(addLiveLog, 3000);
         renderTerminal();
 
         function checkNodeStatus() {
@@ -695,7 +727,7 @@
         }
 
         setInterval(() => {
-            document.getElementById('metricCpu').innerText = (8 + Math.random() * 6).toFixed(0) + '%';
+            document.getElementById('metricCpu').innerText = (11 + Math.random() * 3).toFixed(0) + '%';
             document.getElementById('metricDisk').innerText = (1 + Math.random() * 0.5).toFixed(0) + '%';
         }, 3000);
 
