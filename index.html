@@ -346,7 +346,9 @@
 
         let currentLoggedInUser = "";
 
+        // ==========================================
         // DYNAMIC LOG DATE GENERATION
+        // ==========================================
         function getDynamicDateString(dateObj) {
             const yyyy = dateObj.getFullYear();
             const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -357,7 +359,7 @@
         const todayDateObj = new Date();
         const todayDateStr = getDynamicDateString(todayDateObj);
         
-        // Generate last 5 days of log filenames based on today
+        // Generate last 5 days of log filenames based on today's true date
         const dynamicLogFiles = [];
         for (let i = 0; i < 5; i++) {
             const d = new Date(todayDateObj);
@@ -378,7 +380,9 @@
 }`;
         });
 
-
+        // ==========================================
+        // AUTHENTICATION LOGIC
+        // ==========================================
         function handleLogin(event) {
             event.preventDefault();
             const rawUser = document.getElementById('usernameInput').value;
@@ -484,10 +488,14 @@
             document.getElementById('userManagementModal').classList.add('hidden');
         }
 
-        // STATIC EXACT DB (No Repeating Loop) based on screenshots provided
+        // ==========================================
+        // STATIC EXACT DB WITH DYNAMIC TODAY'S DATE
+        // ==========================================
+        // Notice the times are prepended with `todayDateStr` so they dynamically read as "today"
+        // Also note: the multiple 2002 calls (+601157574095) remain precisely as they occurred in your Node.js console logs, with NO auto-looping.
         const nodeConsoleCalls = [
             {
-                time: '2026-11-05T17:40:23+08:00',
+                time: `${todayDateStr}T17:40:23+08:00`,
                 ext: '2002',
                 phone: '+601157574095',
                 callId: '00000000-01dd-6cfe-443b-b8560004483c',
@@ -496,7 +504,7 @@
                 isTarget: true
             },
             {
-                time: '2026-11-05T17:40:34+08:00',
+                time: `${todayDateStr}T17:40:34+08:00`,
                 ext: '2002',
                 phone: '+601157574095',
                 callId: '00000000-01dd-6cfe-443b-b8560004483c',
@@ -505,7 +513,7 @@
                 isTarget: true
             },
             {
-                time: '2026-11-05T17:41:09+08:00',
+                time: `${todayDateStr}T17:41:09+08:00`,
                 ext: '2002',
                 phone: '+601157574095',
                 callId: '00000000-01dd-6cfe-443b-b8560004483c',
@@ -514,7 +522,7 @@
                 isTarget: true
             },
             {
-                time: '2026-11-05T17:41:19+08:00',
+                time: `${todayDateStr}T17:41:19+08:00`,
                 ext: '2001',
                 phone: '+601113095805',
                 callId: '00000000-01dd-6cf8-b89d-32a20000a4b4',
@@ -523,7 +531,7 @@
                 isTarget: true
             },
             {
-                time: '2026-11-05T17:00:24+08:00',
+                time: `${todayDateStr}T17:00:24+08:00`,
                 ext: '1020',
                 phone: '+601159779890',
                 callId: '00000000-01dd-6d04-1886-befa00004c6b',
@@ -532,7 +540,7 @@
                 isTarget: false
             },
             {
-                time: '2026-11-05T17:03:24+08:00',
+                time: `${todayDateStr}T17:03:24+08:00`,
                 ext: '8025',
                 phone: '+60122953186',
                 callId: '00000000-01dd-6d04-0359-a3540000a61d',
@@ -541,7 +549,7 @@
                 isTarget: false
             },
             {
-                time: '2026-11-05T17:00:40+08:00',
+                time: `${todayDateStr}T17:00:40+08:00`,
                 ext: '1021',
                 phone: '+60122650155',
                 callId: '00000000-01dd-6d04-f8a5-cf4400044d63',
@@ -550,7 +558,7 @@
                 isTarget: false
             },
             {
-                time: '2026-11-05T16:20:55+08:00',
+                time: `${todayDateStr}T16:20:55+08:00`,
                 ext: '3000',
                 phone: '+601120572855',
                 callId: '00000000-01dd-6cfe-9459-327e00044889',
@@ -559,7 +567,7 @@
                 isTarget: false
             },
             {
-                time: '2026-11-05T16:56:52+08:00',
+                time: `${todayDateStr}T16:56:52+08:00`,
                 ext: '1034',
                 phone: '+60132548099',
                 callId: '00000000-01dd-6d03-99cc-5c700004bf2',
