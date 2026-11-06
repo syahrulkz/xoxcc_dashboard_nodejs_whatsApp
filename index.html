@@ -505,19 +505,20 @@
 
         // ==========================================
         // RANDOM LIVE STREAM GENERATOR
+        // ONLY final ext 2001 or 2002 get the WhatsApp blocks
         // ==========================================
         let terminalEntries = [];
         let currentFilter = 'all';
-        let isStreamPaused = false; // Pause state variable
+        let isStreamPaused = false;
 
         const rawRoutes = [
-            { finalExt: '6010', route: '0125636433 -> Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8033 -> Ext.6010' },
-            { finalExt: '6012', route: '0135335859 -> Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8033 -> Ext.6012' },
-            { finalExt: '1028', route: 'Ext.1028 -> 0108215309' },
-            { finalExt: '3000', route: '01120572855 -> Ext.3000' },
-            { finalExt: '1034', route: '0128179669 -> Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3056 -> Ext.8087 -> Ext.8269 -> Ext.1034' },
+            { finalExt: '6010', route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8033 -> Ext.6010' },
+            { finalExt: '6012', route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8033 -> Ext.6012' },
+            { finalExt: '1028', route: 'Ext.1028 -> ' },
+            { finalExt: '3000', route: 'Ext.3000' },
+            { finalExt: '1034', route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3056 -> Ext.8087 -> Ext.8269 -> Ext.1034' },
             { finalExt: '2001', route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8034 -> Ext.3063 -> Ext.2001' },
-            { finalExt: '2002', route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8032 -> Ext.3056 -> Ext.2002' }
+            { finalExt: '2002', route: 'Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8034 -> Ext.3063 -> Ext.2002' }
         ];
 
         function generateRandomCall() {
@@ -533,30 +534,41 @@
             const callId = `00000000-01dd-6c${hex().slice(0,2)}-${hex().padStart(4,'0')}-${hex().padStart(4,'0')}000${hex().padStart(4,'0')}`;
 
             let dynamicRoute = routeTemplate.route;
-            if (dynamicRoute.includes('0125636433')) dynamicRoute = dynamicRoute.replace('0125636433', plainPhoneStr);
-            if (dynamicRoute.includes('0135335859')) dynamicRoute = dynamicRoute.replace('0135335859', plainPhoneStr);
-            if (dynamicRoute.includes('0108215309')) dynamicRoute = dynamicRoute.replace('0108215309', plainPhoneStr);
-            if (dynamicRoute.includes('01120572855')) dynamicRoute = dynamicRoute.replace('01120572855', plainPhoneStr);
-            if (dynamicRoute.includes('0128179669')) dynamicRoute = dynamicRoute.replace('0128179669', plainPhoneStr);
-            if (dynamicRoute.includes('Ext.3000 -> Ext.3001') && !dynamicRoute.includes(plainPhoneStr)) {
+            if (routeTemplate.finalExt === '1028') {
+                // Outbound test call route format
+                dynamicRoute = `Ext.1028 -> ${plainPhoneStr}`;
+            } else if (routeTemplate.finalExt === '3000') {
+                dynamicRoute = `${plainPhoneStr} -> Ext.3000`;
+            } else {
+                // Standard inbound route format
                 dynamicRoute = `${plainPhoneStr} -> ${dynamicRoute}`;
             }
 
+            // Only True if the route ENDS in 2001 or 2002
+            const isTarget = routeTemplate.finalExt === '2001' || routeTemplate.finalExt === '2002';
+            
             return {
                 time: getMalaysiaTimeString(new Date()),
                 callId: callId,
                 phone: phoneStr,
                 route: dynamicRoute,
                 finalExt: routeTemplate.finalExt,
-                isWhatsAppTarget: routeTemplate.finalExt === '2001' || routeTemplate.finalExt === '2002',
-                template: routeTemplate.finalExt === '2001' ? 'greeting1_en' : 'greeting1_bm'
+                isWhatsAppTarget: isTarget,
+                template: routeTemplate.finalExt === '2001' ? 'greeting1_en' : (routeTemplate.finalExt === '2002' ? 'greeting1_bm' : null)
             };
         }
 
         function seedInitialData() {
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 6; i++) {
                 terminalEntries.unshift(generateRandomCall());
             }
+            // Guarantee at least one 2002 record on load for testing
+            const testCall = generateRandomCall();
+            testCall.finalExt = '2002';
+            testCall.route = `${testCall.phone.replace('+60','0')} -> Ext.3000 -> Ext.3001 -> Ext.8053 -> Ext.8028 -> Ext.8034 -> Ext.3063 -> Ext.2002`;
+            testCall.isWhatsAppTarget = true;
+            testCall.template = 'greeting1_bm';
+            terminalEntries.push(testCall);
         }
         seedInitialData();
 
@@ -568,24 +580,20 @@
             const footerText = document.getElementById('footerText');
             
             if (isStreamPaused) {
-                // Change to Amber Play Button
                 btn.innerHTML = '<i class="fa-solid fa-play"></i>';
                 btn.classList.add('text-amber-400');
                 btn.classList.remove('text-gray-400', 'hover:text-white');
                 btn.title = "Resume Stream";
                 
-                // Update Footer Status to Paused
                 footerPing.classList.remove('bg-emerald-500', 'animate-ping');
                 footerPing.classList.add('bg-amber-500');
                 footerText.innerText = "Node.js Stream Paused";
             } else {
-                // Change back to Gray Pause Button
                 btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
                 btn.classList.remove('text-amber-400');
                 btn.classList.add('text-gray-400', 'hover:text-white');
                 btn.title = "Pause Stream";
                 
-                // Update Footer Status to Live
                 footerPing.classList.remove('bg-amber-500');
                 footerPing.classList.add('bg-emerald-500', 'animate-ping');
                 footerText.innerText = "Connected to 103.191.74.17:3000 (Node.js Stream)";
@@ -593,8 +601,7 @@
         }
 
         function addLiveLog() {
-            if (isStreamPaused) return; // Halt generation if paused
-            
+            if (isStreamPaused) return; 
             terminalEntries.push(generateRandomCall());
             if (terminalEntries.length > 50) terminalEntries.shift();
             renderTerminal();
@@ -618,12 +625,16 @@
         function renderTerminal() {
             const terminalOutput = document.getElementById('terminalOutput');
             
+            // STRICT FILTERING: If we are not in the "all" tab, we strictly only allow objects where isWhatsAppTarget is true 
+            // AND the finalExt matches the tab requirement.
             const filtered = terminalEntries.filter(entry => {
                 if (currentFilter === 'all') return true;
+                if (!entry.isWhatsAppTarget) return false;
+                
                 if (currentFilter === '2001') return entry.finalExt === '2001';
                 if (currentFilter === '2002') return entry.finalExt === '2002';
                 if (currentFilter === '2001_2002') return entry.finalExt === '2001' || entry.finalExt === '2002';
-                return true;
+                return false;
             });
 
             if (filtered.length === 0) {
@@ -633,6 +644,9 @@
 
             terminalOutput.innerHTML = filtered.map(call => {
                 
+                const timePlusMilli = call.time.replace('+08:00', '.266+08:00'); // Faking millisecond data for whatsapp_sent block
+                const randomConvoId = `202611${Math.floor(100000 + Math.random() * 900000)}`;
+
                 if (currentFilter === 'all') {
                     const cdrWhiteText = `
                         <div class="text-gray-300 font-mono space-y-1 mb-2">
@@ -644,6 +658,7 @@
                         </div>
                     `;
 
+                    // Only render this green block if it explicitly hit 2001 or 2002
                     const greenWhatsAppBlock = call.isWhatsAppTarget ? `
                         <div class="mt-4 border-l-2 border-emerald-500 pl-4 py-1">
                             <div class="text-emerald-400 font-bold">[${call.time}] whatsapp_sending {</div>
@@ -652,6 +667,15 @@
                                 <div>phone: <span class="text-amber-400">'${call.phone}'</span>,</div>
                                 <div>extension: <span class="text-emerald-400 font-bold">'${call.finalExt}'</span>,</div>
                                 <div>template: <span class="text-purple-400">'${call.template}'</span></div>
+                            </div>
+                            <div class="text-emerald-400 font-bold">}</div>
+                            <div class="text-emerald-400 font-bold">[${timePlusMilli}] whatsapp_sent {</div>
+                            <div class="pl-4 space-y-0.5 text-emerald-300">
+                                <div>callId: <span class="text-cyan-400">'${call.callId}'</span>,</div>
+                                <div>httpStatus: <span class="text-white">200</span>,</div>
+                                <div>conversationId: <span class="text-cyan-400">'${randomConvoId}'</span>,</div>
+                                <div>status: <span class="text-amber-400">'sent'</span>,</div>
+                                <div>attempt: <span class="text-white">1</span></div>
                             </div>
                             <div class="text-emerald-400 font-bold">}</div>
                         </div>
@@ -666,6 +690,7 @@
                 } 
                 
                 else {
+                    // Render isolated green blocks for tabs 2001 / 2002
                     return `
                         <div class="p-3 mb-3 rounded-xl border border-emerald-500/50 bg-emerald-950/10 transition-all">
                             <div class="text-emerald-400 font-bold">[${call.time}] whatsapp_sending {</div>
@@ -674,6 +699,15 @@
                                 <div>phone: <span class="text-amber-400">'${call.phone}'</span>,</div>
                                 <div>extension: <span class="text-emerald-400 font-bold">'${call.finalExt}'</span>,</div>
                                 <div>template: <span class="text-purple-400">'${call.template}'</span></div>
+                            </div>
+                            <div class="text-emerald-400 font-bold">}</div>
+                            <div class="text-emerald-400 font-bold">[${timePlusMilli}] whatsapp_sent {</div>
+                            <div class="pl-4 space-y-0.5 text-emerald-300">
+                                <div>callId: <span class="text-cyan-400">'${call.callId}'</span>,</div>
+                                <div>httpStatus: <span class="text-white">200</span>,</div>
+                                <div>conversationId: <span class="text-cyan-400">'${randomConvoId}'</span>,</div>
+                                <div>status: <span class="text-amber-400">'sent'</span>,</div>
+                                <div>attempt: <span class="text-white">1</span></div>
                             </div>
                             <div class="text-emerald-400 font-bold">}</div>
                         </div>
