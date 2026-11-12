@@ -75,9 +75,9 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="font-bold text-base text-white tracking-wide">XOX CDR & Operations Control Center</h1>
-                        <span id="nodeStatusBadge" class="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5">
-                            <span id="nodeStatusDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 
-                            <span id="nodeStatusText">LIVE POLLING ACTIVE</span>
+                        <span id="nodeStatusBadge" class="px-2.5 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5">
+                            <span id="nodeStatusDot" class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> 
+                            <span id="nodeStatusText">CONNECTING...</span>
                         </span>
                     </div>
                     <p class="text-xs text-gray-400">Asia/Kuala_Lumpur • Node.js Server & Collector Hub</p>
@@ -138,7 +138,7 @@
 
                 <!-- TERMINAL OUTPUT WINDOW -->
                 <div id="terminalOutput" class="flex-1 bg-[#05070b] p-4 font-mono text-xs overflow-y-auto custom-scrollbar space-y-3" style="max-height: 650px; min-height: 500px;">
-                    <div class="text-gray-500 italic"># Polling for live server logs...</div>
+                    <div class="text-gray-500 italic"># Waiting for live logs from server...</div>
                 </div>
 
                 <!-- TERMINAL FOOTER STATUS -->
@@ -216,8 +216,8 @@
         }
 
         let currentFilter = 'all';
-        let allRawLogs = [];
-        let activeLogsMap = new Map();
+        let allRawLogs = []; // Starts completely empty, waiting for real server data
+        let activeLogsMap = new Map(); // Starts completely empty
 
         function setFilter(filterType) {
             currentFilter = filterType;
@@ -235,7 +235,7 @@
             
             if (currentFilter === 'all') {
                 if (allRawLogs.length === 0) {
-                    terminalOutput.innerHTML = `<div class="text-gray-500 italic"># Waiting for live logs...</div>`;
+                    terminalOutput.innerHTML = `<div class="text-gray-500 italic"># Waiting for live logs from server...</div>`;
                     return;
                 }
                 terminalOutput.innerHTML = allRawLogs.map(log => `<div class="p-2 border-b border-bordercol/30 text-gray-300 font-mono text-[10px] break-all">${log}</div>`).join('');
@@ -252,7 +252,7 @@
             });
 
             if (filtered.length === 0) {
-                terminalOutput.innerHTML = `<div class="text-gray-500 italic"># No WhatsApp events for extension ${currentFilter} yet...</div>`;
+                terminalOutput.innerHTML = `<div class="text-gray-500 italic"># No WhatsApp events for extension ${currentFilter.replace('_', ' & ')} yet...</div>`;
                 return;
             }
 
@@ -271,39 +271,51 @@
             terminalOutput.scrollTop = terminalOutput.scrollHeight;
         }
 
-        // REAL-TIME AUTO-POLLING FROM YOUR SERVER / JSONL ENDPOINT
-        async function fetchLiveLogs() {
-            try {
-                // If your Node server exposes an endpoint, or if we append real-time simulated new timestamps:
-                const now = new Date();
-                const timeStr = now.toTimeString().split(' ')[0];
-                const timestampIso = now.toISOString();
+        // LIVE WEBSOCKET CONNECTION TO YOUR NODE.JS SERVER
+        function connectToNodeServer() {
+            const ws = new WebSocket('ws://103.191.74.17:3000');
 
-                // Dynamically append real-time test entries matching current live time
-                const liveCallId = "call-" + Math.floor(Math.random() * 90000 + 10000);
-                const livePhone = "+601" + Math.floor(Math.random() * 90000000 + 10000000);
-                const liveExt = Math.random() > 0.5 ? "2001" : "2002";
-                const liveTemplate = liveExt === "2001" ? "welcome_msg" : "support_msg";
+            ws.onopen = () => {
+                document.getElementById('nodeStatusText').innerText = "ONLINE";
+                document.getElementById('nodeStatusBadge').className = "px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5";
+                document.getElementById('nodeStatusDot').className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse";
+            };
 
-                const newCdrLog = `[${timestampIso}] New CDR (Asia/Kuala_Lumpur): Call ${liveCallId}, Ext.${liveExt}, provider,ivr,${livePhone}`;
-                const newJsonLog = `{"time":"${timeStr}", "callId":"${liveCallId}", "phone":"${livePhone}", "extension":"${liveExt}", "template":"${liveTemplate}"}`;
+            ws.onmessage = (event) => {
+                const rawData = event.data;
+                
+                // 1. Push every incoming log to the "All" tab
+                allRawLogs.push(rawData);
+                if (allRawLogs.length > 200) allRawLogs.shift();
 
-                allRawLogs.push(newCdrLog);
-                allRawLogs.push(newJsonLog);
-                if (allRawLogs.length > 150) allRawLogs.shift();
+                // 2. Parse JSON to catch WhatsApp payloads for extensions 2001 / 2002
+                try {
+                    const data = JSON.parse(rawData);
+                    if (data.extension === '2001' || data.extension === '2002') {
+                        const phone = data.phone;
+                        const timeStr = new Date().toTimeString().split(' ')[0];
+                        const callData = { time: timeStr, callId: data.callId, phone: phone, extension: data.extension, template: data.template };
 
-                const callData = { time: timeStr, callId: liveCallId, phone: livePhone, extension: liveExt, template: liveTemplate };
-                activeLogsMap.set(livePhone, callData);
+                        if (activeLogsMap.has(phone)) activeLogsMap.delete(phone);
+                        activeLogsMap.set(phone, callData);
+                        if (activeLogsMap.size > 50) activeLogsMap.delete(activeLogsMap.keys().next().value);
+                    }
+                } catch (err) {
+                    // Non-JSON standard CDR logs stay in the "All" tab safely
+                }
 
                 renderTerminal();
-            } catch (err) {
-                console.error("Polling error:", err);
-            }
+            };
+
+            ws.onclose = () => {
+                document.getElementById('nodeStatusText').innerText = "DISCONNECTED";
+                document.getElementById('nodeStatusBadge').className = "px-2.5 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5";
+                document.getElementById('nodeStatusDot').className = "w-1.5 h-1.5 rounded-full bg-rose-400";
+                setTimeout(connectToNodeServer, 4000);
+            };
         }
 
-        // Poll every 3 seconds to keep it live and rolling up to the current minute
-        setInterval(fetchLiveLogs, 3000);
-        fetchLiveLogs();
+        connectToNodeServer();
 
         function runTestNetConnection() {
             const ip = document.getElementById('targetIpInput').value;
