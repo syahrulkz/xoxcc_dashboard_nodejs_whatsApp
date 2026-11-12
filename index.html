@@ -77,7 +77,7 @@
                         <h1 class="font-bold text-base text-white tracking-wide">XOX CDR & Operations Control Center</h1>
                         <span id="nodeStatusBadge" class="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5">
                             <span id="nodeStatusDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 
-                            <span id="nodeStatusText">CONNECTED (DASHBOARD ACTIVE)</span>
+                            <span id="nodeStatusText">ONLINE</span>
                         </span>
                     </div>
                     <p class="text-xs text-gray-400">Asia/Kuala_Lumpur • Node.js Server & Collector Hub</p>
@@ -138,7 +138,7 @@
 
                 <!-- TERMINAL OUTPUT WINDOW -->
                 <div id="terminalOutput" class="flex-1 bg-[#05070b] p-4 font-mono text-xs overflow-y-auto custom-scrollbar space-y-3" style="max-height: 650px; min-height: 500px;">
-                    <div class="text-emerald-400"># Dashboard active and monitoring terminal streams...</div>
+                    <!-- Populated via script -->
                 </div>
 
                 <!-- TERMINAL FOOTER STATUS -->
@@ -224,7 +224,6 @@
         ];
         let activeLogsMap = new Map();
 
-        // Initialize mock entries for 2001 and 2002 tabs based on your sample data
         activeLogsMap.set("+60139752424", { time: "15:40:02", callId: "0000-11", phone: "+60139752424", extension: "2001", template: "welcome_msg" });
         activeLogsMap.set("+60137978213", { time: "15:40:15", callId: "0000-12", phone: "+60137978213", extension: "2002", template: "support_msg" });
 
@@ -276,12 +275,11 @@
             terminalOutput.scrollTop = terminalOutput.scrollHeight;
         }
 
-        // Initial render
         renderTerminal();
 
         function runTestNetConnection() {
             const ip = document.getElementById('targetIpInput').value;
-            const port = document.getElementById('targetPortInput5'] || document.getElementById('targetPortInput').value;
+            const port = document.getElementById('targetPortInput').value;
             const psOutput = document.getElementById('psOutputContainer');
             psOutput.innerHTML = `<span class="text-gray-500">Testing connection to ${ip} on port ${port}...</span>`;
             setTimeout(() => {
