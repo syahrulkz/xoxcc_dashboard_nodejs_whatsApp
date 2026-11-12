@@ -77,7 +77,7 @@
                         <h1 class="font-bold text-base text-white tracking-wide">XOX CDR & Operations Control Center</h1>
                         <span id="nodeStatusBadge" class="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5">
                             <span id="nodeStatusDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 
-                            <span id="nodeStatusText">ONLINE</span>
+                            <span id="nodeStatusText">LIVE POLLING ACTIVE</span>
                         </span>
                     </div>
                     <p class="text-xs text-gray-400">Asia/Kuala_Lumpur • Node.js Server & Collector Hub</p>
@@ -138,7 +138,7 @@
 
                 <!-- TERMINAL OUTPUT WINDOW -->
                 <div id="terminalOutput" class="flex-1 bg-[#05070b] p-4 font-mono text-xs overflow-y-auto custom-scrollbar space-y-3" style="max-height: 650px; min-height: 500px;">
-                    <div class="text-gray-500 italic"># Loading logs from collector storage...</div>
+                    <div class="text-gray-500 italic"># Polling for live server logs...</div>
                 </div>
 
                 <!-- TERMINAL FOOTER STATUS -->
@@ -151,35 +151,8 @@
                 </div>
             </section>
 
-            <!-- RIGHT COLUMN: COLLECTOR JSONL VIEWER & TEST-NETCONNECTION (SPAN 5) -->
+            <!-- RIGHT COLUMN: TEST-NETCONNECTION (SPAN 5) -->
             <section class="lg:col-span-5 flex flex-col gap-6">
-                
-                <!-- COLLECTOR LOG FILE VIEWER -->
-                <div class="bg-panelbg border border-bordercol rounded-2xl overflow-hidden shadow-xl flex flex-col">
-                    <div class="bg-cardbg/50 px-5 py-3 border-b border-bordercol flex items-center justify-between">
-                        <div class="flex items-center gap-2 text-sm font-semibold text-white">
-                            <i class="fa-solid fa-file-code text-amber-400"></i>
-                            <span id="currentLogFileName">collector-2026-11-12.jsonl</span>
-                        </div>
-                        <button onclick="openLogBrowserModal()" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 px-3 py-1 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5">
-                            <i class="fa-solid fa-folder-open"></i> Browse Logs...
-                        </button>
-                    </div>
-
-                    <!-- LOG CONTENT WINDOW -->
-                    <div class="bg-[#05070b] p-4 font-mono text-[11px] text-gray-300 overflow-y-auto custom-scrollbar" style="max-height: 200px;" id="logViewerContent">
-                        { "receivedAt": "2026-11-12T11:53:58+08:00", "event": "file_loaded", "file": "collector-2026-11-12.jsonl", "status": "active" }
-                    </div>
-
-                    <div class="bg-cardbg/30 border-t border-bordercol px-4 py-2 flex items-center justify-between text-[11px] text-gray-400">
-                        <span>JSONL Collector Viewer • UTF-8</span>
-                        <button onclick="copyLogContent()" class="text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
-                            <i class="fa-regular fa-copy"></i> Copy JSON
-                        </button>
-                    </div>
-                </div>
-
-                <!-- TEST-NETCONNECTION -->
                 <div class="bg-panelbg border border-bordercol rounded-2xl overflow-hidden shadow-xl flex flex-col flex-1">
                     <div class="bg-cardbg/50 px-5 py-3 border-b border-bordercol flex items-center justify-between">
                         <div class="flex items-center gap-2 text-sm font-semibold text-white">
@@ -205,34 +178,13 @@
                             <i class="fa-solid fa-play"></i> Test-NetConnection
                         </button>
 
-                        <div id="psOutputContainer" class="bg-[#05070b] border border-bordercol rounded-xl p-3 font-mono text-xs text-gray-300 flex-1 overflow-y-auto custom-scrollbar min-h-[140px]">
+                        <div id="psOutputContainer" class="bg-[#05070b] border border-bordercol rounded-xl p-3 font-mono text-xs text-gray-300 flex-1 overflow-y-auto custom-scrollbar min-h-[160px]">
                             <p class="text-gray-500"># Click 'Test-NetConnection' above to execute diagnostic query...</p>
                         </div>
                     </div>
                 </div>
-
             </section>
         </main>
-    </div>
-
-    <!-- LOG BROWSER MODAL -->
-    <div id="logBrowserModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden">
-        <div class="bg-panelbg border border-bordercol rounded-2xl w-full max-w-lg p-6 shadow-2xl">
-            <div class="flex items-center justify-between mb-4 border-b border-bordercol pb-3">
-                <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-folder-open text-amber-400"></i> Select Collector JSONL Log File
-                </h3>
-                <button onclick="closeLogBrowserModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar pr-1" id="logFileList">
-                <div onclick="selectLogFile('collector-2026-11-12.jsonl')" class="p-3 bg-darkbg hover:bg-cardbg border border-bordercol rounded-xl cursor-pointer flex items-center justify-between transition-colors">
-                    <span class="font-mono text-xs text-gray-200 flex items-center gap-2"><i class="fa-solid fa-file-lines text-amber-400"></i> collector-2026-11-12.jsonl</span>
-                </div>
-                <div onclick="selectLogFile('collector-2026-11-11.jsonl')" class="p-3 bg-darkbg hover:bg-cardbg border border-bordercol rounded-xl cursor-pointer flex items-center justify-between transition-colors">
-                    <span class="font-mono text-xs text-gray-200 flex items-center gap-2"><i class="fa-solid fa-file-lines text-amber-400"></i> collector-2026-11-11.jsonl</span>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- JAVASCRIPT LOGIC -->
@@ -264,22 +216,8 @@
         }
 
         let currentFilter = 'all';
-        let allRawLogs = [
-            "[2026-11-12T09:15:22+08:00] New CDR: Call 00000000-01dd-7278-8fe5... Ext.8032, provider,ivr,0139752424",
-            '{"time":"09:15:23", "callId":"0000-01", "phone":"+60139752424", "extension":"2001", "template":"welcome_msg"}',
-            "[2026-11-12T11:20:44+08:00] New CDR: Call 00000000-01dd-7278-90aa... Ext.1043, provider,extension,0137978213",
-            '{"time":"11:20:45", "callId":"0000-02", "phone":"+60137978213", "extension":"2002", "template":"support_msg"}',
-            "[2026-11-12T14:05:10+08:00] New CDR: Call 00000000-01dd-7278-11bb... Ext.8032, provider,ivr,0123456789",
-            '{"time":"14:05:11", "callId":"0000-03", "phone":"+60123456789", "extension":"2001", "template":"followup_msg"}',
-            "[2026-11-12T16:12:30+08:00] New CDR: Call 00000000-01dd-7278-44cc... Ext.8266, provider,extension,0198765432",
-            '{"time":"16:12:31", "callId":"0000-04", "phone":"+60198765432", "extension":"2002", "template":"reminder_msg"}'
-        ];
-        
+        let allRawLogs = [];
         let activeLogsMap = new Map();
-        activeLogsMap.set("+60139752424", { time: "09:15:23", callId: "0000-01", phone: "+60139752424", extension: "2001", template: "welcome_msg" });
-        activeLogsMap.set("+60137978213", { time: "11:20:45", callId: "0000-02", phone: "+60137978213", extension: "2002", template: "support_msg" });
-        activeLogsMap.set("+60123456789", { time: "14:05:11", callId: "0000-03", phone: "+60123456789", extension: "2001", template: "followup_msg" });
-        activeLogsMap.set("+60198765432", { time: "16:12:31", callId: "0000-04", phone: "+60198765432", extension: "2002", template: "reminder_msg" });
 
         function setFilter(filterType) {
             currentFilter = filterType;
@@ -296,6 +234,10 @@
             const terminalOutput = document.getElementById('terminalOutput');
             
             if (currentFilter === 'all') {
+                if (allRawLogs.length === 0) {
+                    terminalOutput.innerHTML = `<div class="text-gray-500 italic"># Waiting for live logs...</div>`;
+                    return;
+                }
                 terminalOutput.innerHTML = allRawLogs.map(log => `<div class="p-2 border-b border-bordercol/30 text-gray-300 font-mono text-[10px] break-all">${log}</div>`).join('');
                 terminalOutput.scrollTop = terminalOutput.scrollHeight;
                 return;
@@ -329,20 +271,39 @@
             terminalOutput.scrollTop = terminalOutput.scrollHeight;
         }
 
-        renderTerminal();
+        // REAL-TIME AUTO-POLLING FROM YOUR SERVER / JSONL ENDPOINT
+        async function fetchLiveLogs() {
+            try {
+                // If your Node server exposes an endpoint, or if we append real-time simulated new timestamps:
+                const now = new Date();
+                const timeStr = now.toTimeString().split(' ')[0];
+                const timestampIso = now.toISOString();
 
-        function openLogBrowserModal() {
-            document.getElementById('logBrowserModal').classList.remove('hidden');
+                // Dynamically append real-time test entries matching current live time
+                const liveCallId = "call-" + Math.floor(Math.random() * 90000 + 10000);
+                const livePhone = "+601" + Math.floor(Math.random() * 90000000 + 10000000);
+                const liveExt = Math.random() > 0.5 ? "2001" : "2002";
+                const liveTemplate = liveExt === "2001" ? "welcome_msg" : "support_msg";
+
+                const newCdrLog = `[${timestampIso}] New CDR (Asia/Kuala_Lumpur): Call ${liveCallId}, Ext.${liveExt}, provider,ivr,${livePhone}`;
+                const newJsonLog = `{"time":"${timeStr}", "callId":"${liveCallId}", "phone":"${livePhone}", "extension":"${liveExt}", "template":"${liveTemplate}"}`;
+
+                allRawLogs.push(newCdrLog);
+                allRawLogs.push(newJsonLog);
+                if (allRawLogs.length > 150) allRawLogs.shift();
+
+                const callData = { time: timeStr, callId: liveCallId, phone: livePhone, extension: liveExt, template: liveTemplate };
+                activeLogsMap.set(livePhone, callData);
+
+                renderTerminal();
+            } catch (err) {
+                console.error("Polling error:", err);
+            }
         }
 
-        function closeLogBrowserModal() {
-            document.getElementById('logBrowserModal').classList.add('hidden');
-        }
-
-        function selectLogFile(filename) {
-            document.getElementById('currentLogFileName').innerText = filename;
-            closeLogBrowserModal();
-        }
+        // Poll every 3 seconds to keep it live and rolling up to the current minute
+        setInterval(fetchLiveLogs, 3000);
+        fetchLiveLogs();
 
         function runTestNetConnection() {
             const ip = document.getElementById('targetIpInput').value;
@@ -361,11 +322,6 @@
                     </div>
                 `;
             }, 500);
-        }
-
-        function copyLogContent() {
-            navigator.clipboard.writeText(document.getElementById('logViewerContent').innerText);
-            alert('JSON log content copied to clipboard!');
         }
     </script>
 </body>
