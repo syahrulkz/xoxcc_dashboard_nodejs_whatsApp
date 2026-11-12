@@ -1,335 +1,150 @@
-<!DOCTYPE html>
-<html lang="en" class="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XOX CDR & Operations Control Center</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        darkbg: '#0b0f19',
-                        panelbg: '#111827',
-                        cardbg: '#1f2937',
-                        bordercol: '#374151'
-                    }
-                }
-            }
-        }
-    </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #111827; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #4b5563; }
-    </style>
-</head>
-<body class="bg-darkbg text-gray-100 min-h-screen flex flex-col antialiased">
+<script>
+    let currentLoggedInUser = localStorage.getItem('xox_activeUser'] || "";
 
-    <!-- AUTHENTICATION LOGIN MODAL -->
-    <div id="authModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-        <div class="bg-panelbg border border-bordercol rounded-2xl w-full max-w-md p-8 shadow-2xl">
-            <div class="text-center mb-6">
-                <div class="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center justify-center mx-auto mb-3 text-emerald-400 text-2xl">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
-                <h2 class="text-xl font-bold text-white">XOX Operations Access</h2>
-                <p class="text-xs text-gray-400 mt-1">Authorized personnel login required</p>
-            </div>
-            
-            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-gray-400 mb-1">Username / Operator ID</label>
-                    <input type="text" id="usernameInput" required autocomplete="off" placeholder="Enter your username..." 
-                        class="w-full bg-darkbg border border-bordercol rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-400 mb-1">Access Password</label>
-                    <input type="password" id="passwordInput" required autocomplete="new-password" placeholder="••••••••" 
-                        class="w-full bg-darkbg border border-bordercol rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
-                </div>
-                <div id="loginError" class="text-xs text-rose-400 text-center hidden">Invalid credentials or user not found.</div>
-                
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-xl transition-colors shadow-lg shadow-emerald-600/20 text-sm flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-right-to-bracket"></i> Authenticate Session
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- MAIN DASHBOARD CONTAINER -->
-    <div id="mainDashboard" class="flex-1 flex flex-col filter blur-sm pointer-events-none transition-all duration-300">
-        <!-- TOP NAVIGATION BAR -->
-        <header class="bg-panelbg border-b border-bordercol px-6 py-3.5 flex items-center justify-between sticky top-0 z-30">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-center text-emerald-400 text-lg">
-                    <i class="fa-solid fa-terminal"></i>
-                </div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="font-bold text-base text-white tracking-wide">XOX CDR & Operations Control Center</h1>
-                        <span id="nodeStatusBadge" class="px-2.5 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5">
-                            <span id="nodeStatusDot" class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> 
-                            <span id="nodeStatusText">CONNECTING...</span>
-                        </span>
-                    </div>
-                    <p class="text-xs text-gray-400">Asia/Kuala_Lumpur • Node.js Server & Collector Hub</p>
-                </div>
-            </div>
-
-            <!-- SYSTEM METRICS -->
-            <div class="hidden xl:flex items-center gap-4 bg-cardbg/80 border border-bordercol px-4 py-1.5 rounded-xl text-xs">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-microchip text-emerald-400"></i>
-                    <span class="text-gray-400">CPU:</span>
-                    <span id="metricCpu" class="font-mono font-medium text-white">12%</span>
-                </div>
-                <div class="h-3 w-px bg-bordercol"></div>
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-memory text-cyan-400"></i>
-                    <span class="text-gray-400">RAM:</span>
-                    <span id="metricRam" class="font-mono font-medium text-white">6.1 / 7.9 GB</span>
-                </div>
-                <div class="h-3 w-px bg-bordercol"></div>
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-hard-drive text-amber-400"></i>
-                    <span class="text-gray-400">DISK:</span>
-                    <span id="metricDisk" class="font-mono font-medium text-white">1%</span>
-                </div>
-            </div>
-
-            <!-- USER & UTILITIES -->
-            <div class="flex items-center gap-3">
-                <div class="flex items-center gap-2 bg-cardbg border border-bordercol px-3 py-1.5 rounded-xl text-xs text-gray-300">
-                    <i class="fa-solid fa-user-shield text-emerald-400"></i>
-                    <span id="loggedInUserDisplay">User</span>
-                </div>
-                <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5">
-                    <i class="fa-solid fa-right-from-bracket"></i> Logout
-                </button>
-            </div>
-        </header>
-
-        <!-- MAIN GRID CONTENT -->
-        <main class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            <!-- LEFT COLUMN: LIVE NODE.JS CDR STREAM (SPAN 7) -->
-            <section class="lg:col-span-7 flex flex-col bg-panelbg border border-bordercol rounded-2xl overflow-hidden shadow-xl">
-                <div class="bg-cardbg/50 px-5 py-3 border-b border-bordercol flex items-center justify-between">
-                    <div class="flex items-center gap-2.5 text-sm font-semibold text-white">
-                        <i class="fa-solid fa-square-rss text-emerald-400 animate-pulse"></i>
-                        <span>Live Terminal Stream — node app.js</span>
-                    </div>
-                    <!-- STREAM FILTERS -->
-                    <div class="flex items-center gap-1 bg-darkbg p-1 rounded-xl border border-bordercol text-xs">
-                        <button onclick="setFilter('all')" id="filterBtn-all" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-medium transition-colors">All</button>
-                        <button onclick="setFilter('2001')" id="filterBtn-2001" class="px-2.5 py-1 rounded-lg text-gray-400 hover:text-white transition-colors">2001</button>
-                        <button onclick="setFilter('2002')" id="filterBtn-2002" class="px-2.5 py-1 rounded-lg text-gray-400 hover:text-white transition-colors">2002</button>
-                        <button onclick="setFilter('2001_2002')" id="filterBtn-2001_2002" class="px-2.5 py-1 rounded-lg text-gray-400 hover:text-white transition-colors">2001 & 2002</button>
-                    </div>
-                </div>
-
-                <!-- TERMINAL OUTPUT WINDOW -->
-                <div id="terminalOutput" class="flex-1 bg-[#05070b] p-4 font-mono text-xs overflow-y-auto custom-scrollbar space-y-3" style="max-height: 650px; min-height: 500px;">
-                    <div class="text-gray-500 italic"># Waiting for live logs from server...</div>
-                </div>
-
-                <!-- TERMINAL FOOTER STATUS -->
-                <div class="bg-cardbg/30 border-t border-bordercol px-4 py-2.5 flex items-center justify-between text-xs text-gray-400">
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                        <span>Live streaming CDR events & WhatsApp gateway...</span>
-                    </div>
-                    <span class="text-emerald-400 font-semibold font-mono">Active Target Ext: 2001, 2002</span>
-                </div>
-            </section>
-
-            <!-- RIGHT COLUMN: TEST-NETCONNECTION (SPAN 5) -->
-            <section class="lg:col-span-5 flex flex-col gap-6">
-                <div class="bg-panelbg border border-bordercol rounded-2xl overflow-hidden shadow-xl flex flex-col flex-1">
-                    <div class="bg-cardbg/50 px-5 py-3 border-b border-bordercol flex items-center justify-between">
-                        <div class="flex items-center gap-2 text-sm font-semibold text-white">
-                            <i class="fa-solid fa-network-wired text-cyan-400"></i>
-                            <span>TEST-NETCONNECTION</span>
-                        </div>
-                        <span class="text-xs px-2 py-0.5 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-md font-mono">PowerShell v5</span>
-                    </div>
-
-                    <div class="p-4 space-y-4 flex-1 flex flex-col">
-                        <div class="grid grid-cols-12 gap-2">
-                            <div class="col-span-8">
-                                <label class="block text-[10px] uppercase font-semibold text-gray-400 mb-1">ComputerName / IP Address</label>
-                                <input type="text" id="targetIpInput" value="103.191.74.17" class="w-full bg-darkbg border border-bordercol rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-500">
-                            </div>
-                            <div class="col-span-4">
-                                <label class="block text-[10px] uppercase font-semibold text-gray-400 mb-1">Port</label>
-                                <input type="text" id="targetPortInput" value="3000" class="w-full bg-darkbg border border-bordercol rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-500">
-                            </div>
-                        </div>
-
-                        <button onclick="runTestNetConnection()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-2.5 rounded-xl transition-colors text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/20">
-                            <i class="fa-solid fa-play"></i> Test-NetConnection
-                        </button>
-
-                        <div id="psOutputContainer" class="bg-[#05070b] border border-bordercol rounded-xl p-3 font-mono text-xs text-gray-300 flex-1 overflow-y-auto custom-scrollbar min-h-[160px]">
-                            <p class="text-gray-500"># Click 'Test-NetConnection' above to execute diagnostic query...</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- JAVASCRIPT LOGIC -->
-    <script>
-        let currentLoggedInUser = localStorage.getItem('xox_activeUser') || "";
-
-        function checkSessionOnLoad() {
-            if (currentLoggedInUser) {
-                document.getElementById('authModal').classList.add('hidden');
-                document.getElementById('mainDashboard').classList.remove('filter', 'blur-sm', 'pointer-events-none');
-                document.getElementById('loggedInUserDisplay').innerText = currentLoggedInUser;
-            }
-        }
-        checkSessionOnLoad();
-
-        function handleLogin(event) {
-            event.preventDefault();
-            const user = document.getElementById('usernameInput').value.trim().toLowerCase();
-            currentLoggedInUser = user;
-            localStorage.setItem('xox_activeUser', user);
+    function checkSessionOnLoad() {
+        if (currentLoggedInUser) {
             document.getElementById('authModal').classList.add('hidden');
             document.getElementById('mainDashboard').classList.remove('filter', 'blur-sm', 'pointer-events-none');
-            document.getElementById('loggedInUserDisplay').innerText = user;
+            document.getElementById('loggedInUserDisplay').innerText = currentLoggedInUser;
         }
+    }
+    checkSessionOnLoad();
 
-        function handleLogout() {
-            localStorage.removeItem('xox_activeUser');
-            location.reload();
-        }
+    function handleLogin(event) {
+        event.preventDefault();
+        const user = document.getElementById('usernameInput').value.trim().toLowerCase();
+        currentLoggedInUser = user;
+        localStorage.setItem('xox_activeUser', user);
+        document.getElementById('authModal').classList.add('hidden');
+        document.getElementById('mainDashboard').classList.remove('filter', 'blur-sm', 'pointer-events-none');
+        document.getElementById('loggedInUserDisplay').innerText = user;
+    }
 
-        let currentFilter = 'all';
-        let allRawLogs = [];
-        let activeLogsMap = new Map();
+    function handleLogout() {
+        localStorage.removeItem('xox_activeUser');
+        location.reload();
+    }
 
-        function setFilter(filterType) {
-            currentFilter = filterType;
-            ['all', '2001', '2002', '2001_2002'].forEach(f => {
-                const btn = document.getElementById(`filterBtn-${f}`);
-                if (btn) {
-                    btn.className = (f === filterType) ? "px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-medium transition-colors" : "px-2.5 py-1 rounded-lg text-gray-400 hover:text-white transition-colors";
-                }
-            });
-            renderTerminal();
-        }
+    let currentFilter = 'all';
+    let allRawLogs = []; // Stores ALL logs for the "All" tab
+    let activeLogsMap = new Map(); // Stores filtered extension logs for 2001/2002 tabs
 
-        function renderTerminal() {
-            const terminalOutput =- document.getElementById('terminalOutput');
-            
-            if (currentFilter === 'all') {
-                if (allRawLogs.length === 0) {
-                    terminalOutput.innerHTML = `<div class="text-gray-500 italic"># Waiting for live logs from server (103.191.74.17:3000)...</div>`;
-                    return;
-                }
-                terminalOutput.innerHTML = allRawLogs.map(log => `<div class="p-2 border-b border-bordercol/30 text-gray-300 font-mono text-[10px] break-all">${log}</div>`).join('');
-                terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    function setFilter(filterType) {
+        currentFilter = filterType;
+        ['all', '2001', '2002', '2001_2002'].forEach(f => {
+            const btn = document.getElementById(`filterBtn-${f}`);
+            if (btn) {
+                btn.className = (f === filterType) ? "px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-medium transition-colors" : "px-2.5 py-1 rounded-lg text-gray-400 hover:text-white transition-colors";
+            }
+        });
+        renderTerminal();
+    }
+
+    function renderTerminal() {
+        const terminalOutput = document.getElementById('terminalOutput');
+        
+        // 1. "ALL" TAB: Displays every single raw log line hitting the server
+        if (currentFilter === 'all') {
+            if (allRawLogs.length === 0) {
+                terminalOutput.innerHTML = `<div class="text-gray-500 italic"># Waiting for live logs from server...</div>`;
                 return;
             }
-
-            const entriesArray = Array.from(activeLogsMap.values());
-            const filtered = entriesArray.filter(call => {
-                if (currentFilter === '2001') return call.extension === '2001';
-                if (currentFilter === '2002') return call.extension === '2002';
-                if (currentFilter === '2001_2002') return call.extension === '2001' || call.extension === '2002';
-                return false;
-            });
-
-            if (filtered.length === 0) {
-                terminalOutput.innerHTML = `<div class="text-gray-500 italic"># No WhatsApp events for this extension yet...</div>`;
-                return;
-            }
-
-            terminalOutput.innerHTML = filtered.map(call => `
-                <div class="p-3 rounded-xl border border-emerald-500/50 bg-emerald-950/10 transition-all mb-3">
-                    <div class="text-gray-500">[${call.time}] whatsapp_sending {</div>
-                    <div class="pl-4 space-y-0.5">
-                        <div>callId: <span class="text-cyan-400">'${call.callId}'</span>,</div>
-                        <div>phone: <span class="text-amber-400">'${call.phone}'</span>,</div>
-                        <div>extension: <span class="text-emerald-400 font-bold">'${call.extension}'</span>,</div>
-                        <div>template: <span class="text-purple-400">'${call.template}'</span></div>
-                    </div>
-                    <div class="text-gray-500">}</div>
-                </div>
-            `).join('');
+            terminalOutput.innerHTML = allRawLogs.map(log => `<div class="p-2 border-b border-bordercol/30 text-gray-300 font-mono text-[10px] break-all">${log}</div>`).join('');
             terminalOutput.scrollTop = terminalOutput.scrollHeight;
+            return;
         }
 
-        // CONNECT TO NODE.JS SERVER
-        function connectToNodeServer() {
-            const ws = new WebSocket('ws://103.191.74.17:3000');
+        // 2. EXTENSION TABS (2001, 2002, 2001 & 2002): Display ONLY green WhatsApp matched payloads
+        const entriesArray = Array.from(activeLogsMap.values());
+        const filtered = entriesArray.filter(call => {
+            if (currentFilter === '2001') return call.extension === '2001';
+            if (currentFilter === '2002') return call.extension === '2002';
+            if (currentFilter === '2001_2002') return call.extension === '2001' || call.extension === '2002';
+            return false;
+        });
 
-            ws.onopen = () => {
-                document.getElementById('nodeStatusText').innerText = "ONLINE";
-                document.getElementById('nodeStatusBadge').className = "px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5";
-                document.getElementById('nodeStatusDot').className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse";
-            };
-
-            ws.onmessage = (event) => {
-                const rawData = event.data;
-                allRawLogs.push(rawData);
-                if (allRawLogs.length > 100) allRawLogs.shift();
-
-                try {
-                    const data = JSON.parse(rawData);
-                    if (data.extension) {
-                        const phone = data.phone;
-                        const timeStr = new Date().toISOString().replace('Z', '+08:00').split('.')[0];
-                        const callData = { time: timeStr, callId: data.callId, phone: phone, extension: data.extension, template: data.template };
-
-                        if (activeLogsMap.has(phone)) activeLogsMap.delete(phone);
-                        activeLogsMap.set(phone, callData);
-                        if (activeLogsMap.size > 40) activeLogsMap.delete(activeLogsMap.keys().next().value);
-                    }
-                } catch (err) {}
-
-                renderTerminal();
-            };
-
-            ws.onclose = () => {
-                document.getElementById('nodeStatusText').innerText = "DISCONNECTED";
-                document.getElementById('nodeStatusBadge').className = "px-2.5 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5";
-                document.getElementById('nodeStatusDot').className = "w-1.5 h-1.5 rounded-full bg-rose-400";
-                setTimeout(connectToNodeServer, 3000);
-            };
+        if (filtered.length === 0) {
+            terminalOutput.innerHTML = `<div class="text-gray-500 italic"># No WhatsApp events for extension ${currentFilter.replace('_', ' & ')} yet...</div>`;
+            return;
         }
 
-        connectToNodeServer();
+        terminalOutput.innerHTML = filtered.map(call => `
+            <div class="p-3 rounded-xl border border-emerald-500/50 bg-emerald-950/10 transition-all mb-3">
+                <div class="text-gray-500">[${call.time}] whatsapp_sending {</div>
+                <div class="pl-4 space-y-0.5">
+                    <div>callId: <span class="text-cyan-400">'${call.callId}'</span>,</div>
+                    <div>phone: <span class="text-amber-400">'${call.phone}'</span>,</div>
+                    <div>extension: <span class="text-emerald-400 font-bold">'${call.extension}'</span>,</div>
+                    <div>template: <span class="text-purple-400">'${call.template}'</span></div>
+                </div>
+                <div class="text-gray-500">}</div>
+            </div>
+        `).join('');
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
 
-        function runTestNetConnection() {
-            const ip = document.getElementById('targetIpInput').value;
-            const port = document.getElementById('targetPortInput').value;
-            const psOutput = document.getElementById('psOutputContainer');
-            psOutput.innerHTML = `<span class="text-gray-500">Testing connection to ${ip} on port ${port}...</span>`;
-            setTimeout(() => {
-                psOutput.innerHTML = `
-                    <div class="space-y-1">
-                        <div class="text-emerald-400 font-bold">ComputerName     : ${ip}</div>
-                        <div>RemoteAddress    : ${ip}</div>
-                        <div>RemotePort       : ${port}</div>
-                        <div>InterfaceAlias : Ethernet</div>
-                        <div>SourceAddress  : 192.168.2.89</div>
-                        <div class="text-emerald-400 font-bold pt-1">TcpTestSucceeded : True</div>
-                    </div>
-                `;
-            }, 500);
-        }
-    </script>
-</body>
-</html>
+    // CONNECT TO NODE.JS WEBSOCKET SERVER
+    function connectToNodeServer() {
+        const ws = new WebSocket('ws://103.191.74.17:3000');
+
+        ws.onopen = () => {
+            document.getElementById('nodeStatusText').innerText = "ONLINE";
+            document.getElementById('nodeStatusBadge').className = "px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5";
+            document.getElementById('nodeStatusDot').className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse";
+        };
+
+        ws.onmessage = (event) => {
+            const rawData = event.data;
+            
+            // Push everything to the "All" tab array
+            allRawLogs.push(rawData);
+            if (allRawLogs.length > 100) allRawLogs.shift();
+
+            // Try parsing JSON to catch green extension payloads for 2001/2002 tabs
+            try {
+                const data = JSON.parse(rawData);
+                if (data.extension === '2001' || data.extension === '2002') {
+                    const phone = data.phone;
+                    const timeStr = new Date().toISOString().replace('Z', '+08:00').split('.')[0];
+                    const callData = { time: timeStr, callId: data.callId, phone: phone, extension: data.extension, template: data.template };
+
+                    if (activeLogsMap.has(phone)) activeLogsMap.delete(phone);
+                    activeLogsMap.set(phone, callData);
+                    if (activeLogsMap.size > 40) activeLogsMap.delete(activeLogsMap.keys().next().value);
+                }
+            } catch (err) {
+                // Non-JSON standard CDR logs are safely ignored here and stay visible only in the "All" tab
+            }
+
+            renderTerminal();
+        };
+
+        ws.onclose = () => {
+            document.getElementById('nodeStatusText').innerText = "DISCONNECTED";
+            document.getElementById('nodeStatusBadge').className = "px-2.5 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5";
+            document.getElementById('nodeStatusDot').className = "w-1.5 h-1.5 rounded-full bg-rose-400";
+            setTimeout(connectToNodeServer, 4000);
+        };
+    }
+
+    connectToNodeServer();
+
+    function runTestNetConnection() {
+        const ip = document.getElementById('targetIpInput').value;
+        const port = document.getElementById('targetPortInput').value;
+        const psOutput = document.getElementById('psOutputContainer');
+        psOutput.innerHTML = `<span class="text-gray-500">Testing connection to ${ip} on port ${port}...</span>`;
+        setTimeout(() => {
+            psOutput.innerHTML = `
+                <div class="space-y-1">
+                    <div class="text-emerald-400 font-bold">ComputerName     : ${ip}</div>
+                    <div>RemoteAddress    : ${ip}</div>
+                    <div>RemotePort       : ${port}</div>
+                    <div>InterfaceAlias : Ethernet</div>
+                    <div>SourceAddress  : 192.168.2.89</div>
+                    <div class="text-emerald-400 font-bold pt-1">TcpTestSucceeded : True</div>
+                </div>
+            `;
+        }, 500);
+    }
+</script>
