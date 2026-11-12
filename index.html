@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XOX CDR & Operations Control Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Supabase library for secure wss:// connection -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -81,7 +83,7 @@
                         <h1 class="font-bold text-base text-white tracking-wide">XOX CDR & Operations Control Center</h1>
                         <span id="nodeStatusBadge" class="px-2.5 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5">
                             <span id="nodeStatusDot" class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> 
-                            <span id="nodeStatusText">CONNECTING...</span>
+                            <span id="nodeStatusText">CONNECTING TO SUPABASE...</span>
                         </span>
                     </div>
                     <p class="text-xs text-gray-400">Asia/Kuala_Lumpur • Node.js Server & Collector Hub</p>
@@ -355,7 +357,6 @@
                 document.getElementById('loggedInUserDisplay').innerText = currentLoggedInUser;
             }
         }
-        // Run immediately when script loads
         checkSessionOnLoad();
         // ---------------------------------------------------------
 
@@ -378,7 +379,7 @@
 
             if (isValidPassword) {
                 currentLoggedInUser = user;
-                localStorage.setItem('xox_activeUser', user); // Save session
+                localStorage.setItem('xox_activeUser', user);
                 
                 document.getElementById('authModal').classList.add('hidden');
                 const mainDash = document.getElementById('mainDashboard');
@@ -392,7 +393,7 @@
 
         function handleLogout() {
             currentLoggedInUser = "";
-            localStorage.removeItem('xox_activeUser'); // Destroy session
+            localStorage.removeItem('xox_activeUser');
             
             document.getElementById('mainDashboard').classList.add('filter', 'blur-sm', 'pointer-events-none');
             document.getElementById('authModal').classList.remove('hidden');
@@ -469,12 +470,16 @@
         }
 
         // ==========================================
-        // FIXED LIVE TERMINAL LOGIC (ALL LOGS VS WHATSAPP LOGS)
+        // LIVE TERMINAL LOGIC & SUPABASE INTEGRATION
         // ==========================================
         
+        // REPLACE THESE TWO LINES WITH YOUR ACTUAL SUPABASE CREDENTIALS
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL'; 
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        
         let currentFilter = 'all';
-        let allRawLogs = []; // Array to store every standard CDR log hitting the server
-        let activeLogsMap = new Map(); // Map to store ONLY the latest green JSON payloads for extensions
+        let allRawLogs = []; // Array for raw string logs on "All" tab
+        let activeLogsMap = new Map(); // Map for parsed JSON logs on extension tabs
 
         function setFilter(filterType) {
             currentFilter = filterType;
@@ -497,7 +502,7 @@
             // 1. IF TAB IS 'ALL': Show everything identically to your server terminal output
             if (currentFilter === 'all') {
                 if (allRawLogs.length === 0) {
-                    terminalOutput.innerHTML = `<div class="text-gray-500 italic"># Waiting for live logs from server...</div>`;
+                    terminalOutput.innerHTML = `<div class="text-gray-500 italic"># Waiting for live logs from Supabase server...</div>`;
                     return;
                 }
                 
@@ -544,67 +549,70 @@
             terminalOutput.scrollTop = terminalOutput.scrollHeight;
         }
 
-        // ------------------------------------------
-        // REAL-TIME NODE.JS WEBSOCKET CONNECTION
-        // ------------------------------------------
-        function connectToNodeServer() {
-            const ws = new WebSocket('ws://103.191.74.17:3000');
+        // Initialize Supabase Client
+        let supabaseClient;
+        if (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY') {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
 
-            ws.onopen = () => {
-                document.getElementById('nodeStatusText').innerText = "ONLINE (STREAM ACTIVE)";
-                document.getElementById('nodeStatusBadge').className = "px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5";
-                document.getElementById('nodeStatusDot').className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse";
-            };
+        function connectToSupabase() {
+            if (!supabaseClient) {
+                console.warn("Supabase credentials not set. Terminal will not stream live data.");
+                return;
+            }
 
-            ws.onmessage = (event) => {
-                const rawData = typeof event.data === 'string' ? event.data : JSON.stringify(event.data);
-                
-                // 1. Push all standard string logs to the 'All' array immediately
-                allRawLogs.push(rawData);
-                if (allRawLogs.length > 100) allRawLogs.shift(); // Keep max 100 lines so it doesn't freeze browser
+            document.getElementById('nodeStatusText').innerText = "ONLINE (SUPABASE STREAM)";
+            document.getElementById('nodeStatusBadge').className = "px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5";
+            document.getElementById('nodeStatusDot').className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse";
 
-                // 2. Try to parse JSON to find specific WhatsApp events for the extension tabs
-                try {
-                    const data = JSON.parse(rawData);
+            // Subscribe to database inserts on the live_logs table
+            supabaseClient
+                .channel('public:live_logs')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'live_logs' }, payload => {
+                    const newRow = payload.new;
                     
-                    if (data.extension) {
-                        const phone = data.phone;
-                        const timeStr = new Date().toISOString().replace('Z', '+08:00').split('.')[0];
+                    // 1. Push raw text to 'All' array
+                    if (newRow.raw_text) {
+                        allRawLogs.push(newRow.raw_text);
+                        if (allRawLogs.length > 100) allRawLogs.shift();
+                    }
 
+                    // 2. Map structured data for 2001/2002 tabs
+                    if (newRow.extension) {
+                        // Use Supabase created_at timestamp
+                        const timeStr = new Date(newRow.created_at).toISOString().replace('Z', '+08:00').split('.')[0];
+                        
                         const callData = { 
                             time: timeStr, 
-                            callId: data.callId, 
-                            phone: phone, 
-                            extension: data.extension, 
-                            template: data.template 
+                            callId: newRow.call_id, 
+                            phone: newRow.phone, 
+                            extension: newRow.extension, 
+                            template: newRow.template 
                         };
 
-                        // Ensure latest status overrides old duplicate phone numbers
-                        if (activeLogsMap.has(phone)) activeLogsMap.delete(phone);
-                        activeLogsMap.set(phone, callData);
+                        if (activeLogsMap.has(newRow.phone)) activeLogsMap.delete(newRow.phone);
+                        activeLogsMap.set(newRow.phone, callData);
 
                         if (activeLogsMap.size > 40) {
                             activeLogsMap.delete(activeLogsMap.keys().next().value);
                         }
                     }
-                } catch (err) {
-                    // This catches standard text logs (like "New CDR...") that are not JSON.
-                    // This is expected and harmless, as they are already saved in allRawLogs above.
-                }
 
-                renderTerminal();
-            };
-
-            ws.onclose = () => {
-                document.getElementById('nodeStatusText').innerText = "DISCONNECTED - RECONNECTING...";
-                document.getElementById('nodeStatusBadge').className = "px-2.5 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5";
-                document.getElementById('nodeStatusDot').className = "w-1.5 h-1.5 rounded-full bg-rose-400";
-                
-                setTimeout(connectToNodeServer, 3000);
-            };
+                    renderTerminal();
+                })
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        console.log('Successfully connected to Supabase Realtime.');
+                    } else if (status === 'CHANNEL_ERROR') {
+                        document.getElementById('nodeStatusText').innerText = "DISCONNECTED";
+                        document.getElementById('nodeStatusBadge').className = "px-2.5 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-semibold rounded-full flex items-center gap-1.5";
+                        document.getElementById('nodeStatusDot').className = "w-1.5 h-1.5 rounded-full bg-rose-400";
+                    }
+                });
         }
 
-        connectToNodeServer();
+        // Start listening to the database
+        connectToSupabase();
 
         // ==========================================
         // UI UTILITY FUNCTIONS
